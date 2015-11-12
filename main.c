@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
-#include <ctype.h>
 
-void parseArgs(int argc,char** argv, int* hx, int* hy, int* maxIter, 
+void parseArgs(int argc,char** argv, double* hx, double* hy, int* maxIter, 
     char** path);
 bool isInt(char* str);
 
 int int main(int argc, char** argv){
-    int hx, hy, maxIter;
+    double hx, hy;
+    int maxIter;
     char** path;
     
     parseArgs(argc,argv,&hx,&hy,&maxIter,&path);
@@ -16,7 +16,7 @@ int int main(int argc, char** argv){
     return 0;
 }
 
-void parseArgs(int argc,char** argv, int* hx, int* hy, int* maxIter, 
+void parseArgs(int argc,char** argv, double* hx, double* hy, int* maxIter, 
     char** path){
     
     int c;
@@ -28,26 +28,23 @@ void parseArgs(int argc,char** argv, int* hx, int* hy, int* maxIter,
     while ((c = getopt_long(argc, argv, "x:y:i:o:", longopts, NULL)) != -1) {
         switch (c) {
             case 'x':
-                if(isInt(optarg))
-                    *hx = atoi(optarg);
-                else{
-                    printf("Inserir apenas inteiros para a opção -hx.\n");
+                *hx = atof(optarg);
+                if(*hx == 0.0){
+                    printf("Valor inválido para a opção -hx.\n");
                     abort();
                 }
                 break;
             case 'y':
-                if(isInt(optarg))
-                    *hy = atoi(optarg);
-                else{
-                    printf("Inserir apenas inteiros para a opção -hy.\n");
+                *hy = atof(optarg);
+                if(*hy == 0.0){
+                    printf("Valor inválido para a opção -hy.\n");
                     abort();
                 }
                 break;
             case 'i':
-                if(isInt(optarg))
-                    *maxIter = atoi(optarg);
-                else{
-                    printf("Inserir apenas inteiros para a opção -i.\n");
+                *maxIter = atoi(optarg);
+                if(!*maxIter){
+                    printf("Valor inválido para a opção -i.\n");
                     abort();
                 }
                 break;
@@ -59,17 +56,4 @@ void parseArgs(int argc,char** argv, int* hx, int* hy, int* maxIter,
                 abort();
         }
    }
-}
-
-bool isInt(char* str){
-    if (!*str)
-        return false;
-
-    while (*str){
-        if (!isdigit(*str))
-            return false;
-        else
-            ++str;
-    }
-    return true;
 }
