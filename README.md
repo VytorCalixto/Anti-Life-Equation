@@ -6,7 +6,7 @@
 O objetivo deste trabalho é implementar um programa computacional que calcule a 
 solução discreta para a equação Diferencial Parcial definida [AQUI](http://www.inf.ufpr.br/danielw/grad/ci164/20152/ci164-Trabalho-01.pdf).
 
-Para tal, o programa deve utilizar **Diferenças Finitas e o Método de Successive Over Relaxation (SOR) com fator de relaxação  ω = (2 - (hx+hy)) / 2**.
+Para tal, o programa deve utilizar **Diferenças Finitas e o Método de Successive Over Relaxation (SOR) com fator de relaxação  ω =  ω = 2 - ((hx+hy) / 2)**.
 
 O **critério de parada** deve ser o **número máximo de iterações**;
 
