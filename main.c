@@ -1,18 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <stdbool.h>
+#include <sys/time.h>
 
 void parseArgs(int argc,char** argv, double* hx, double* hy, int* maxIter,
     char** path);
 bool isInt(char* str);
 double timestamp(void);
 
-int int main(int argc, char** argv){
+int main(int argc, char** argv){
     double hx, hy;
     int maxIter;
     char** path;
 
     parseArgs(argc,argv,&hx,&hy,&maxIter,&path);
+    double sorFactor = 2 - ((hx+hy)/2);
 
     return 0;
 }
@@ -23,7 +26,7 @@ void parseArgs(int argc,char** argv, double* hx, double* hy, int* maxIter,
     int c;
     struct option longopts[] = {
        { "hx", required_argument, NULL, 'x' },
-       { "hy", required_argument, NULL, 'y' }
+       { "hy", required_argument, NULL, 'y' },
        { 0, 0, 0, 0 }
     };
     while ((c = getopt_long(argc, argv, "x:y:i:o:", longopts, NULL)) != -1) {
@@ -50,7 +53,7 @@ void parseArgs(int argc,char** argv, double* hx, double* hy, int* maxIter,
                 }
                 break;
             case 'o':
-                *path = optarg
+                *path = optarg;
                 break;
             default:
                 printf("Opção inexistente.\n");
