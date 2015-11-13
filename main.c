@@ -2,23 +2,24 @@
 #include <stdlib.h>
 #include <getopt.h>
 
-void parseArgs(int argc,char** argv, double* hx, double* hy, int* maxIter, 
+void parseArgs(int argc,char** argv, double* hx, double* hy, int* maxIter,
     char** path);
 bool isInt(char* str);
+double timestamp(void);
 
 int int main(int argc, char** argv){
     double hx, hy;
     int maxIter;
     char** path;
-    
+
     parseArgs(argc,argv,&hx,&hy,&maxIter,&path);
 
     return 0;
 }
 
-void parseArgs(int argc,char** argv, double* hx, double* hy, int* maxIter, 
+void parseArgs(int argc,char** argv, double* hx, double* hy, int* maxIter,
     char** path){
-    
+
     int c;
     struct option longopts[] = {
        { "hx", required_argument, NULL, 'x' },
@@ -56,4 +57,10 @@ void parseArgs(int argc,char** argv, double* hx, double* hy, int* maxIter,
                 abort();
         }
    }
+}
+
+double timestamp(void) {
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    return ((double)(tp.tv_sec + tp.tv_usec/1000000.0));
 }
