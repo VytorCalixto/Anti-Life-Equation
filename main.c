@@ -3,6 +3,9 @@
 #include <getopt.h>
 #include <stdbool.h>
 #include <sys/time.h>
+#include <math.h>
+
+#define PI 3.14159265358979323846
 
 void parseArgs(int argc,char** argv, double* hx, double* hy, int* maxIter,
     char** path);
@@ -16,6 +19,8 @@ int main(int argc, char** argv){
 
     parseArgs(argc,argv,&hx,&hy,&maxIter,&path);
     double sorFactor = 2 - ((hx+hy)/2);
+    double nx = round(PI/hx) + 1;
+    double ny = round(PI/hy) + 1;
 
     return 0;
 }
