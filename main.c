@@ -22,8 +22,22 @@ int main(int argc, char** argv){
     parseArgs(argc,&argv,&hx,&hy,&maxIter,&path);
     printf("hx %f hy %f i %d path %s \n", hx, hy, maxIter, path);
     double sorFactor = 2 - ((hx+hy)/2);
-    double nx = round(PI/hx) + 1;
-    double ny = round(PI/hy) + 1;
+    int nx = round(PI/hx) + 1;
+    int ny = round(PI/hy) + 1;
+    printf("INFO: Number of points(NX x NY): %d %d\n", nx, ny);
+    printf("INFO: Overrelaxation factor: %f\n", sorFactor);
+    double *a, *b, *x;
+    // allocating (nx+2) * (ny+2) to include the borders
+    a = malloc((nx+2)*(ny+2)*sizeof(double));
+    memset(a, 0, (nx+2)*(ny+2)*sizeof(double));
+    b = malloc((nx+2)*sizeof(double));
+    x = malloc((nx+2)*sizeof(double));
+    memset(x, 0, (nx+2)*sizeof(double));
+    // Set top and bottom borders
+    for(int j=0; j <ny+2; ++j) {
+        a[0 + j*(nx+2)] = topFrontier(j*hx);
+        a[nx+1 + j*(nx+2)] = bottomFrontier(j*hx);
+    }
 
     return 0;
 }
