@@ -25,7 +25,7 @@ int main(int argc, char** argv){
     double sorFactor = 2 - ((hx+hy)/2);
     int nx = round(PI/hx) + 1;
     int ny = round(PI/hy) + 1;
-    int points = (nx+2)*(nx+2);
+    int points = (nx+2)*(ny+2);
     printf("INFO: Number of points(NX x NY): %d %d\n", nx, ny);
     printf("INFO: Overrelaxation factor: %f\n", sorFactor);
     double *a, *b, *x;
@@ -36,14 +36,23 @@ int main(int argc, char** argv){
     b = malloc(points*sizeof(double));
     x = malloc(points*sizeof(double));
     memset(x, 0, points*sizeof(double));
+
+    double hxx = hx*hx;
+    double hyy = hy*hy;
+
+    // Set initial value to B
+    for(int j=0; j < nx+2; ++j) {
+        for(int k=0; k < ny+2; ++k) {
+            b[j+k*(nx+2)] = 2*f(j*hx, k*hy)*hxx*hyy;
+        }
+    }
+
     // Set top and bottom borders
     for(int j=0; j <points; ++j) {
         a[0 + j*(points)] = bottomFrontier(j*hx);
         a[points-1 + j*(points)] = topFrontier(j*hx);
     }
 
-    double hxx = hx*hx;
-    double hyy = hy*hy;
     double denominator = (4*(2*PI_SQUARE*hxx*hyy+hxx+hyy));
     double up, left, right, down;
     up = hx*hyy-2*hyy;
@@ -56,18 +65,26 @@ int main(int argc, char** argv){
         for(int k=1; k < points-1; ++k) {
             if(j > 1 ) {
                 a[(j-1) + k*points] = down;
+            } else {
+                b[k] -= down*a[(j-1) + k*points];
             }
 
             if(j < (points-1)) {
                 a[(j+1) + k*points] = up;
+            } else {
+                b[k] -= up*a[(j+1) + k*points];
             }
 
             if(k > 1) {
                 a[j + (k-1)*points] = left;
+            } else {
+                b[k] = left*a[j + (k-1)*points];
             }
 
             if(k < (points-1)) {
                 a[j + (k+1)*points] = right;
+            } else {
+                b[k] = right*a[j + (k+1)*points];
             }
 
         }
@@ -128,7 +145,7 @@ double timestamp(void) {
 
 double f(double x, double y) {
     // f(x, y) = 4pi²[sin(2pix)sinh(piy)+sin(2pi(pi-x))sinh(pi(pi-y))]
-    return 4*PI_SQUARE*(sin(2*PI*x)*sinh(PI*y)+sin(2*PI_SQUARE-2*x)*sinh(PI_SQUARE*PI-y));
+    return 4*PI_SQUARE*(sin(2*PI*x)*sinh(PI*y)+sin(2*PI_SQUARE-2*PI*x)*sinh(PI_SQUARE*PI-y));
 }
 
 double topFrontier(double x) {
