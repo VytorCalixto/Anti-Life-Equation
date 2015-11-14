@@ -10,6 +10,7 @@
 
 void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
     char** path);
+void writeData(char* path, double sorTime, double resTime, int maxIter, double** resNorms, int points, double hx, double hy, double** x);
 double timestamp(void);
 double f(double x, double y);
 double topFrontier(double x);
@@ -135,6 +136,30 @@ void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
         fputs("Argumento faltando.\n", stderr);
         exit(-1);
     }
+}
+
+void writeData(char* path, double sorTime, double resTime, int maxIter,
+    double** resNorms, int points, double hx, double hy, double** x){
+    FILE *f = fopen(path, "w");
+    if (f == NULL)
+    {
+        fprintf(stderr, "Erro ao abrir arquivo %s.\n", path);
+        exit(1);
+    }
+    fprintf(f, "###########\n");
+    fprintf(f, "# Tempo Método SOR: %f\n", sorTime);
+    fprintf(f, "# Tempo Resíduo: %f\n", resTime);
+    fprintf(f, "#\n");
+    fprintf(f, "# Norma do Resíduo\n");
+    for(int i=0;i<maxIter;++i){
+        fprintf(f, "# i= %d: %f\n", i+1, (*resNorms)[i]);
+    }
+    fprintf(f, "###########\n");
+    fprintf(f, "# X Y Z\n");
+    for(int i=0; i < points-1; ++i)
+        for(int j=0; j < points-1; ++j) 
+            fprintf(f, "# %f %f %f \n", i*hx, j*hy, x[i+j*points]);
+    fclose(f);
 }
 
 double timestamp(void) {
