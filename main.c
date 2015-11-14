@@ -10,6 +10,9 @@
 void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
     char** path);
 double timestamp(void);
+double f(double x, double y);
+double topFrontier(double x);
+double bottomFrontier(double x);
 
 int main(int argc, char** argv){
     double hx, hy;
@@ -69,4 +72,18 @@ double timestamp(void) {
     struct timeval tp;
     gettimeofday(&tp, NULL);
     return ((double)(tp.tv_sec + tp.tv_usec/1000000.0));
+}
+
+double f(double x, double y) {
+    double squared_pi = PI*PI;
+    // f(x, y) = 4pi²[sin(2pix)sinh(piy)+sin(2pi(pi-x))sinh(pi(pi-y))]
+    return 4*squared_pi*(sin(2*PI*x)*sinh(PI*y)+sin(2*squared_pi-2*x)*sinh(squared_pi*PI-y));
+}
+
+double topFrontier(double x) {
+    return sin(2*PI*x)*sinh(PI*PI);
+}
+
+double bottomFrontier(double x) {
+    return sin(2*PI*PI-2*PI*x)*sinh(PI*PI);
 }
