@@ -25,25 +25,61 @@ int main(int argc, char** argv){
     double sorFactor = 2 - ((hx+hy)/2);
     int nx = round(PI/hx) + 1;
     int ny = round(PI/hy) + 1;
+    int points = (nx+2)*(nx+2);
     printf("INFO: Number of points(NX x NY): %d %d\n", nx, ny);
     printf("INFO: Overrelaxation factor: %f\n", sorFactor);
     double *a, *b, *x;
     // allocating (nx+2) * (ny+2) to include the borders
     // access a[i][j] by using a[i+j*(nx+2)]
-    a = malloc((nx+2)*(ny+2)*sizeof(double));
-    memset(a, 0, (nx+2)*(ny+2)*sizeof(double));
-    b = malloc((nx+2)*sizeof(double));
-    x = malloc((nx+2)*sizeof(double));
-    memset(x, 0, (nx+2)*sizeof(double));
+    a = malloc(points*points*sizeof(double));
+    memset(a, 0, points*points*sizeof(double));
+    b = malloc(points*sizeof(double));
+    x = malloc(points*sizeof(double));
+    memset(x, 0, points*sizeof(double));
     // Set top and bottom borders
-    for(int j=0; j <ny+2; ++j) {
-        a[0 + j*(nx+2)] = topFrontier(j*hx);
-        a[nx+1 + j*(nx+2)] = bottomFrontier(j*hx);
+    for(int j=0; j <points; ++j) {
+        a[0 + j*(points)] = bottomFrontier(j*hx);
+        a[points-1 + j*(points)] = topFrontier(j*hx);
     }
 
     double hxx = hx*hx;
     double hyy = hy*hy;
-    double denominator = 1/(4*(2*PI_SQUARE*hxx*hyy+hxx+hyy));
+    double denominator = (4*(2*PI_SQUARE*hxx*hyy+hxx+hyy));
+    double up, left, right, down;
+    up = hx*hyy-2*hyy;
+    down = -(hx*hyy+2*hyy);
+    right = hxx*hy-2*hxx;
+    left = -(hxx*hy+2*hxx);
+
+    for(int j=1; j < points-1; ++j) {
+        a[j+j*points] = denominator;
+        for(int k=1; k < points-1; ++k) {
+            if(j > 1 ) {
+                a[(j-1) + k*points] = down;
+            }
+
+            if(j < (points-1)) {
+                a[(j+1) + k*points] = up;
+            }
+
+            if(k > 1) {
+                a[j + (k-1)*points] = left;
+            }
+
+            if(k < (points-1)) {
+                a[j + (k+1)*points] = right;
+            }
+
+        }
+    }
+
+    for(int j=0; j < points; ++j) {
+        for(int k=0; k < points; ++k) {
+            printf("%f  ", a[j+k*(points)]);
+        }
+        puts("");
+        puts("");
+    }
 
     free(a);
     free(b);
