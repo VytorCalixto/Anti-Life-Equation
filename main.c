@@ -6,6 +6,7 @@
 #include <string.h>
 
 #define PI 3.14159265358979323846
+#define PI_SQUARE 9.86960440108935861883
 
 void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
     char** path);
@@ -28,6 +29,7 @@ int main(int argc, char** argv){
     printf("INFO: Overrelaxation factor: %f\n", sorFactor);
     double *a, *b, *x;
     // allocating (nx+2) * (ny+2) to include the borders
+    // access a[i][j] by using a[i+j*(nx+2)]
     a = malloc((nx+2)*(ny+2)*sizeof(double));
     memset(a, 0, (nx+2)*(ny+2)*sizeof(double));
     b = malloc((nx+2)*sizeof(double));
@@ -38,6 +40,14 @@ int main(int argc, char** argv){
         a[0 + j*(nx+2)] = topFrontier(j*hx);
         a[nx+1 + j*(nx+2)] = bottomFrontier(j*hx);
     }
+
+    double hxx = hx*hx;
+    double hyy = hy*hy;
+    double denominator = 1/(4*(2*PI_SQUARE*hxx*hyy+hxx+hyy));
+
+    free(a);
+    free(b);
+    free(x);
 
     return 0;
 }
@@ -89,13 +99,12 @@ double timestamp(void) {
 }
 
 double f(double x, double y) {
-    double squared_pi = PI*PI;
     // f(x, y) = 4pi²[sin(2pix)sinh(piy)+sin(2pi(pi-x))sinh(pi(pi-y))]
-    return 4*squared_pi*(sin(2*PI*x)*sinh(PI*y)+sin(2*squared_pi-2*x)*sinh(squared_pi*PI-y));
+    return 4*PI_SQUARE*(sin(2*PI*x)*sinh(PI*y)+sin(2*PI_SQUARE-2*x)*sinh(PI_SQUARE*PI-y));
 }
 
 double topFrontier(double x) {
-    return sin(2*PI*x)*sinh(PI*PI);
+    return sin(2*PI*x)*sinh(PI_SQUARE);
 }
 
 double bottomFrontier(double x) {
