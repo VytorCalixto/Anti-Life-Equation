@@ -73,14 +73,6 @@ int main(int argc, char** argv){
         }
     }
 
-    for(int j=0; j < points; ++j) {
-        for(int k=0; k < points; ++k) {
-            printf("%f  ", a[j+k*(points)]);
-        }
-        puts("");
-        puts("");
-    }
-
     free(a);
     free(b);
     free(x);
