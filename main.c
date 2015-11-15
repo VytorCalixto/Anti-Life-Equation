@@ -107,8 +107,7 @@ int main(int argc, char** argv){
 
     // SOR
     double t0 = timestamp();
-    int iter = 0;
-    while((iter++)<maxIter) {
+    for(int iter=0;iter<maxIter;++iter) {
         for(int i=0; i < points; ++i) {
             double r = 0;
             int mod = i % (nx);
