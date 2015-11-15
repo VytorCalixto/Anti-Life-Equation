@@ -202,6 +202,7 @@ void writeData(char* path, double sorTime, double resTime, int maxIter,
         fprintf(f, "# i= %d: %f\n", i+1, (*resNorms)[i]);
     }
     fprintf(f, "###########\n");
+    fprintf(f, "set terminal qt persist\n");
     fprintf(f, "set hidden3d\n");
     fprintf(f, "set dgrid3d 50,50 qnorm 2\n");
     fprintf(f, "splot '-' u 1:2:3 w l\n");
