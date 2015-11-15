@@ -205,7 +205,10 @@ void writeData(char* path, double sorTime, double resTime, int maxIter,
     fprintf(f, "###########\n");
     fprintf(f, "set terminal wxt persist\n");
     fprintf(f, "set hidden3d\n");
-    fprintf(f, "set dgrid3d 100,100 qnorm 2\n");
+    fprintf(f, "set dgrid3d %d,%d qnorm 2\n", nx, ny);
+    fprintf(f, "set xlabel 'Y'\n");
+    fprintf(f, "set ylabel 'X'\n");
+    fprintf(f, "set zlabel 'u(x,y)'\n");
     fprintf(f, "splot '-' u 1:2:3 w l\n");
     fprintf(f, "# X Y Z\n");
     for(int i=0; i < nx; ++i)
