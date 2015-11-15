@@ -128,7 +128,7 @@ int main(int argc, char** argv){
     //     puts("");
     // }
 
-    writeData(path, 0, 0, maxIter, &resNorms, nx, ny, hx, hy, &x);
+    writeData(path, (t1-t0)/maxIter, (t1-t0)/maxIter, maxIter, &resNorms, nx, ny, hx, hy, &x);
 
     free(a);
     free(b);
