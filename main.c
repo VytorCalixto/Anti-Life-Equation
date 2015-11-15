@@ -92,7 +92,8 @@ int main(int argc, char** argv){
 
     // SOR
     double t0 = timestamp();
-    while(maxIter--) {
+    int iter = 0;
+    while((iter++)<maxIter) {
         for(int i=0; i < points; ++i) {
             double r = 0;
             int mod = i % (nx);
@@ -112,7 +113,7 @@ int main(int argc, char** argv){
                 r += a[i].up*x[i+nx];
             }
             double residual = ((b[i]-r)/a[i].dg - x[i]);
-            resNorms[i] = residual;
+            resNorms[iter] = residual;
             x[i] = x[i] + omega*residual;
         }
     }
