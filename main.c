@@ -46,6 +46,7 @@ int main(int argc, char** argv){
     x = malloc(points*sizeof(double));
     memset(x, 0, points*sizeof(double));
     resNorms = malloc(maxIter*sizeof(double));
+    memset(resNorms, 0, maxIter*sizeof(double));
 
     double hxx = hx*hx;
     double hyy = hy*hy;
@@ -113,9 +114,10 @@ int main(int argc, char** argv){
                 r += a[i].up*x[i+nx];
             }
             double residual = ((b[i]-r)/a[i].dg - x[i]);
-            resNorms[iter] = residual;
+            resNorms[iter] += residual;
             x[i] = x[i] + omega*residual;
         }
+        resNorms[iter] = sqrt(fabs(resNorms[iter]));
     }
     double t1 = timestamp();
 
