@@ -91,10 +91,10 @@ int main(int argc, char** argv){
         for(int i=0; i < points; ++i) {
             double r = 0;
             for(int j=0; j < i; ++j) {
-                r += a[i*points + j]*x[i];
+                r += a[i*points + j]*x[j];
             }
             for(int j=i+1; j < points; ++j) {
-                r += a[i*points + j]*x[i];
+                r += a[i*points + j]*x[j];
             }
             x[i] = x[i] + sorFactor*((b[i]-r)/a[i*points + i] - x[i]);
         }
