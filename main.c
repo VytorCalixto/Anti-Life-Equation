@@ -21,13 +21,13 @@ int main(int argc, char** argv){
     int maxIter;
     char* path;
     parseArgs(argc,&argv,&hx,&hy,&maxIter,&path);
-    printf("hx %f hy %f i %d path %s \n", hx, hy, maxIter, path);
+    printf("#hx %f hy %f i %d path %s \n", hx, hy, maxIter, path);
     double sorFactor = 2 - ((hx+hy)/2);
     int nx = round(PI/hx) + 1;
     int ny = round(PI/hy) + 1;
     int points = (nx)*(ny);
-    printf("INFO: Number of points(NX x NY): %d %d\n", nx, ny);
-    printf("INFO: Overrelaxation factor: %f\n", sorFactor);
+    printf("#INFO: Number of points(NX x NY): %d %d\n", nx, ny);
+    printf("#INFO: Overrelaxation factor: %f\n", sorFactor);
     double *a, *b, *x;
 
     a = malloc(points*points*sizeof(double));
@@ -96,12 +96,12 @@ int main(int argc, char** argv){
             for(int j=i+1; j < points; ++j) {
                 r += a[i*points + j]*x[i];
             }
-            x[i] += sorFactor*((b[i]-r)/a[i*points + i] - x[i]);
+            x[i] = x[i] + sorFactor*((b[i]-r)/a[i*points + i] - x[i]);
         }
     }
     double t1 = timestamp();
 
-    printf("INFO: tempo = %f\n", t1-t0);
+    printf("#INFO: tempo = %f\n", t1-t0);
 
     // for(int i=0; i < points; ++i) {
     //     for(int j=0; j < points; ++j) {
