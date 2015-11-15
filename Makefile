@@ -1,4 +1,4 @@
-CFLAGS = -lm -std=c99 -Wall -g
+CFLAGS = -lm -std=c99 -Wall -O3
 
 all: main.c
 	gcc -o pdeSolver main.c $(CFLAGS)

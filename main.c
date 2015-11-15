@@ -10,85 +10,134 @@
 
 void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
     char** path);
+void writeData(char* path, double sorTime, double resTime, int maxIter,
+    double** resNorms, int nx, int ny, double hx, double hy, double** x);
 double timestamp(void);
 double f(double x, double y);
 double topFrontier(double x);
 double bottomFrontier(double x);
 
+typedef struct{
+    double dg; //diagonal, Ui,j
+    double up; //up, Ui+1,j
+    double dw; //down, Ui-1,j
+    double rt; //right, Ui,j+1
+    double lt; //left, Ui,j-1
+} Point;
+
 int main(int argc, char** argv){
     double hx, hy;
     int maxIter;
     char* path;
-    int i=0;
     parseArgs(argc,&argv,&hx,&hy,&maxIter,&path);
-    printf("hx %f hy %f i %d path %s \n", hx, hy, maxIter, path);
-    double sorFactor = 2 - ((hx+hy)/2);
+    // printf("#hx %f hy %f i %d path %s \n", hx, hy, maxIter, path);
+    double omega = 2 - ((hx+hy)/2);
     int nx = round(PI/hx) + 1;
     int ny = round(PI/hy) + 1;
-    int points = (nx+2)*(ny+2);
-    printf("INFO: Number of points(NX x NY): %d %d\n", nx, ny);
-    printf("INFO: Overrelaxation factor: %f\n", sorFactor);
-    double *a, *b, *x;
-    // allocating (nx+2) * (ny+2) to include the borders
-    // access a[i][j] by using a[i+j*(nx+2)]
-    a = malloc(points*points*sizeof(double));
-    memset(a, 0, points*points*sizeof(double));
+    int points = (nx)*(ny);
+    // printf("#INFO: Number of points(NX x NY): %d x %d\n", nx, ny);
+    // printf("#INFO: Overrelaxation factor: %f\n", omega);
+    Point *a;
+    double *b, *x, *resNorms;
+
+    a = malloc(points*sizeof(Point));
+    if(a == NULL) {
+        fprintf(stderr, "Erro ao alocar vetor A\n");
+        exit(1);
+    }
+    memset(a, 0, points*sizeof(Point));
     b = malloc(points*sizeof(double));
+    if(b == NULL) {
+        fprintf(stderr, "Erro ao alocar vetor B\n");
+        exit(1);
+    }
     x = malloc(points*sizeof(double));
+    if(x == NULL) {
+        fprintf(stderr, "Erro ao alocar vetor X\n");
+        exit(1);
+    }
     memset(x, 0, points*sizeof(double));
+    resNorms = malloc(maxIter*sizeof(double));
+    if(resNorms == NULL) {
+        fprintf(stderr, "Erro ao alocar vetor da norma dos resíduos\n");
+        exit(1);
+    }
+    memset(resNorms, 0, maxIter*sizeof(double));
 
     double hxx = hx*hx;
     double hyy = hy*hy;
 
     // Set initial value to B
-    for(int j=0; j < nx+2; ++j) {
-        for(int k=0; k < ny+2; ++k) {
-            b[j+k*(nx+2)] = 2*f(j*hx, k*hy)*hxx*hyy;
+    for(int i=0; i < ny; ++i) {
+        for(int j=0; j < nx; ++j) {
+            b[i*nx+j] = 2*f(j*hx, i*hy)*hxx*hyy;
         }
     }
 
-    // Set top and bottom borders
-    for(int j=0; j <points; ++j) {
-        a[0 + j*(points)] = bottomFrontier(j*hx);
-        a[points-1 + j*(points)] = topFrontier(j*hx);
-    }
-
-    double denominator = (4*(2*PI_SQUARE*hxx*hyy+hxx+hyy));
+    double denominator = 4*(2*PI_SQUARE*hxx*hyy+hxx+hyy);
     double up, left, right, down;
     up = hx*hyy-2*hyy;
     down = -(hx*hyy+2*hyy);
     right = hxx*hy-2*hxx;
     left = -(hxx*hy+2*hxx);
 
-    for(int j=1; j < points-1; ++j) {
-        a[j+j*points] = denominator;
-        for(int k=1; k < points-1; ++k) {
-            if(j > 1 ) {
-                a[(j-1) + k*points] = down;
-            } else {
-                b[k] -= down*a[(j-1) + k*points];
-            }
+    for(int i=0; i < points; ++i) {
+        int mod = i % (nx);
+        a[i].dg = denominator;
+        if(mod > 0) {
+            a[i].lt = left;
+        }
 
-            if(j < (points-1)) {
-                a[(j+1) + k*points] = up;
-            } else {
-                b[k] -= up*a[(j+1) + k*points];
-            }
+        if(mod < (nx-1)) {
+            a[i].rt = right;
+        }
 
-            if(k > 1) {
-                a[j + (k-1)*points] = left;
-            } else {
-                b[k] = left*a[j + (k-1)*points];
-            }
+        if(i >= nx) {
+            a[i].dw = down;
+        } else {
+            b[i] -= down*bottomFrontier(i*hx);
+        }
 
-            if(k < (points-1)) {
-                a[j + (k+1)*points] = right;
-            } else {
-                b[k] = right*a[j + (k+1)*points];
-            }
-
+        if(i < (points - nx)) {
+            a[i].up = up;
+        } else {
+            b[i] -= up*topFrontier(mod*hx);
         }
     }
+
+    // SOR
+    double t0 = timestamp();
+    int iter = 0;
+    while((iter++)<maxIter) {
+        for(int i=0; i < points; ++i) {
+            double r = 0;
+            int mod = i % (nx);
+            if(mod > 0) {
+                r += a[i].lt*x[i-1];
+            }
+
+            if(mod < (nx-1)) {
+                r += a[i].rt*x[i+1];
+            }
+
+            if(i >= nx) {
+                r += a[i].dw*x[i-nx];
+            }
+
+            if(i < (points - nx)) {
+                r += a[i].up*x[i+nx];
+            }
+            double residual = ((b[i]-r)/a[i].dg - x[i]);
+            resNorms[iter] += residual;
+            x[i] = x[i] + omega*residual;
+        }
+        resNorms[iter] = sqrt(fabs(resNorms[iter]));
+    }
+    double t1 = timestamp();
+
+    // printf("#INFO: tempo = %f\n", t1-t0);
+
+    writeData(path, (t1-t0)/maxIter, (t1-t0)/maxIter, maxIter, &resNorms, nx, ny, hx, hy, &x);
 
     free(a);
     free(b);
@@ -137,6 +186,37 @@ void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
     }
 }
 
+void writeData(char* path, double sorTime, double resTime, int maxIter,
+    double** resNorms, int nx, int ny, double hx, double hy, double** x){
+    FILE *f = fopen(path, "w");
+    if (f == NULL)
+    {
+        fprintf(stderr, "Erro ao abrir arquivo %s.\n", path);
+        exit(1);
+    }
+    fprintf(f, "###########\n");
+    fprintf(f, "# Tempo Método SOR: %.17g\n", sorTime);
+    fprintf(f, "# Tempo Resíduo: %.17g\n", resTime);
+    fprintf(f, "#\n");
+    fprintf(f, "# Norma do Resíduo\n");
+    for(int i=0;i<maxIter;++i){
+        fprintf(f, "# i= %d: %f\n", i+1, (*resNorms)[i]);
+    }
+    fprintf(f, "###########\n");
+    fprintf(f, "set terminal wxt persist\n");
+    fprintf(f, "set hidden3d\n");
+    fprintf(f, "set dgrid3d %d,%d qnorm 2\n", nx, ny);
+    fprintf(f, "set xlabel 'Y'\n");
+    fprintf(f, "set ylabel 'X'\n");
+    fprintf(f, "set zlabel 'u(x,y)'\n");
+    fprintf(f, "splot '-' u 1:2:3 w l\n");
+    fprintf(f, "# X Y Z\n");
+    for(int i=0; i < nx; ++i)
+        for(int j=0; j < ny; ++j)
+            fprintf(f, "%.17g %.17g %.17g\n", i*hx, j*hy, (*x)[(i*ny)+j]);
+    fclose(f);
+}
+
 double timestamp(void) {
     struct timeval tp;
     gettimeofday(&tp, NULL);
@@ -145,7 +225,8 @@ double timestamp(void) {
 
 double f(double x, double y) {
     // f(x, y) = 4pi²[sin(2pix)sinh(piy)+sin(2pi(pi-x))sinh(pi(pi-y))]
-    return 4*PI_SQUARE*(sin(2*PI*x)*sinh(PI*y)+sin(2*PI_SQUARE-2*PI*x)*sinh(PI_SQUARE*PI-y));
+    double r = 4*PI_SQUARE*(sin(2*PI*x)*sinh(PI*y)+sin(2*PI*(PI-x))*sinh(PI*(PI-y)));
+    return r;
 }
 
 double topFrontier(double x) {
