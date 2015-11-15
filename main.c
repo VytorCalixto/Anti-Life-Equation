@@ -149,17 +149,18 @@ int main(int argc, char** argv){
 void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
     char** path){
     int i;
+    char *ptr;
     int argSet[4] = {0,0,0,0};
     for(i=1; i < argc; i+=2){
         if(!strcmp((*argv)[i],"-hx")){
-            *hx = atof((*argv)[i+1]);
+            *hx = strtod((*argv)[i+1], &ptr);
             if(*hx == 0.0){
                 fputs("Valor inválido para a opção -hx.\n", stderr);
                 exit(-1);
             }
             argSet[0] = 1;
         }else if(!strcmp((*argv)[i],"-hy")){
-            *hy = atof((*argv)[i+1]);
+            *hy = strtod((*argv)[i+1], &ptr);
             if(*hy == 0.0){
                 fputs("Valor inválido para a opção -hy.\n", stderr);
                 exit(-1);
