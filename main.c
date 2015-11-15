@@ -37,13 +37,14 @@ int main(int argc, char** argv){
     printf("#INFO: Number of points(NX x NY): %d x %d\n", nx, ny);
     printf("#INFO: Overrelaxation factor: %f\n", omega);
     Point *a;
-    double *b, *x;
+    double *b, *x, *resNorms;
 
     a = malloc(points*sizeof(Point));
     memset(a, 0, points*sizeof(Point));
     b = malloc(points*sizeof(double));
     x = malloc(points*sizeof(double));
     memset(x, 0, points*sizeof(double));
+    resNorms = malloc(maxIter*sizeof(double));
 
     double hxx = hx*hx;
     double hyy = hy*hy;
@@ -54,12 +55,6 @@ int main(int argc, char** argv){
             b[i*nx+j] = 2*f(j*hx, i*hy)*hxx*hyy;
         }
     }
-
-    // for(int i=0; i < nx;  ++i) {
-    //     for(int j=0; j < ny; ++j) {
-    //         printf("(%d,%d): %f\n", i, j, b[i*nx + j]);
-    //     }
-    // }
 
     double denominator = 4*(2*PI_SQUARE*hxx*hyy+hxx+hyy);
     double up, left, right, down;
@@ -99,12 +94,6 @@ int main(int argc, char** argv){
     while(maxIter--) {
         for(int i=0; i < points; ++i) {
             double r = 0;
-            // for(int j=0; j < i; ++j) {
-            //     r += a[i*points + j]*x[j];
-            // }
-            // for(int j=i+1; j < points; ++j) {
-            //     r += a[i*points + j]*x[j];
-            // }
             int mod = i % (nx);
             if(mod > 0) {
                 r += a[i].lt*x[i-1];
@@ -121,20 +110,15 @@ int main(int argc, char** argv){
             if(i < (points - nx)) {
                 r += a[i].up*x[i+nx];
             }
-            x[i] = x[i] + omega*((b[i]-r)/a[i].dg - x[i]);
+            double residual = ((b[i]-r)/a[i].dg - x[i]);
+            resNorms[i] = residual;
+            x[i] = x[i] + omega*residual;
         }
     }
     double t1 = timestamp();
 
     printf("#INFO: tempo = %f\n", t1-t0);
 
-    // for(int i=0; i < points; ++i) {
-    //     for(int j=0; j < points; ++j) {
-    //         printf("%f\t", a[i*points+j]);
-    //     }
-    //     puts("");
-    // }
-    //
     for(int i=0; i < ny;  ++i) {
         for(int j=0; j < nx; ++j) {
             printf("%f\t", x[i*nx + j]);
@@ -142,9 +126,9 @@ int main(int argc, char** argv){
         puts("");
     }
 
-    // free(a);
-    // free(b);
-    // free(x);
+    free(a);
+    free(b);
+    free(x);
 
     return 0;
 }
