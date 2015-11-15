@@ -19,3 +19,5 @@ Para resolver esse problema, criamos uma estrutura chamada Point que representav
 Alteramos então o SOR para trabalhar com essa estrutura de dados e com isso funcionando, fizemos o cálculo da norma L² do resíduo e a função para escrever o arquivo de saída. Por último, realizamos testes com valores diversos (mas principalmente potências de 2) para testar a execução do programa.
 
 Bugs conhecidos:
+
+* A entrada de dados só aceita doubles com até 6 dígitos nos valores de hx e hy. Para valores menores do que 10^-6 geram erro ao alocar os vetores.
