@@ -121,12 +121,12 @@ int main(int argc, char** argv){
 
     printf("#INFO: tempo = %f\n", t1-t0);
 
-    for(int i=0; i < ny;  ++i) {
-        for(int j=0; j < nx; ++j) {
-            printf("%f\t", x[i*nx + j]);
-        }
-        puts("");
-    }
+    // for(int i=0; i < ny;  ++i) {
+    //     for(int j=0; j < nx; ++j) {
+    //         printf("%f\t", x[i*nx + j]);
+    //     }
+    //     puts("");
+    // }
 
     writeData(path, 0, 0, maxIter, &resNorms, nx, ny, hx, hy, &x);
 
@@ -196,11 +196,11 @@ void writeData(char* path, double sorTime, double resTime, int maxIter,
     fprintf(f, "###########\n");
     fprintf(f, "set terminal wxt persist\n");
     fprintf(f, "set hidden3d\n");
-    fprintf(f, "set dgrid3d 50,50 qnorm 2\n");
+    fprintf(f, "set dgrid3d 100,100 qnorm 2\n");
     fprintf(f, "splot '-' u 1:2:3 w l\n");
     fprintf(f, "# X Y Z\n");
     for(int i=0; i < nx; ++i)
-        for(int j=0; j < ny; ++j) 
+        for(int j=0; j < ny; ++j)
             fprintf(f, "%.17g %.17g %.17g\n", i*hx, j*hy, (*x)[(i*ny)+j]);
     fclose(f);
 }
