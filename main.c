@@ -10,7 +10,8 @@
 
 void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
     char** path);
-void writeData(char* path, double sorTime, double resTime, int maxIter, double** resNorms, int points, double hx, double hy, double** x);
+void writeData(char* path, double sorTime, double resTime, int maxIter,
+    double** resNorms, int nx, int ny, double hx, double hy, double** x);
 double timestamp(void);
 double f(double x, double y);
 double topFrontier(double x);
@@ -126,6 +127,8 @@ int main(int argc, char** argv){
         puts("");
     }
 
+    writeData(path, 0, 0, maxIter, &resNorms, nx, ny, hx, hy, &x);
+
     free(a);
     free(b);
     free(x);
@@ -174,7 +177,7 @@ void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
 }
 
 void writeData(char* path, double sorTime, double resTime, int maxIter,
-    double** resNorms, int points, double hx, double hy, double** x){
+    double** resNorms, int nx, int ny, double hx, double hy, double** x){
     FILE *f = fopen(path, "w");
     if (f == NULL)
     {
@@ -182,18 +185,22 @@ void writeData(char* path, double sorTime, double resTime, int maxIter,
         exit(1);
     }
     fprintf(f, "###########\n");
-    fprintf(f, "# Tempo Método SOR: %f\n", sorTime);
-    fprintf(f, "# Tempo Resíduo: %f\n", resTime);
+    fprintf(f, "# Tempo Método SOR: %.17g\n", sorTime);
+    fprintf(f, "# Tempo Resíduo: %.17g\n", resTime);
     fprintf(f, "#\n");
     fprintf(f, "# Norma do Resíduo\n");
     for(int i=0;i<maxIter;++i){
         fprintf(f, "# i= %d: %f\n", i+1, (*resNorms)[i]);
     }
     fprintf(f, "###########\n");
+    fprintf(f, "set terminal qt persist\n");
+    fprintf(f, "set hidden3d\n");
+    fprintf(f, "set dgrid3d 50,50 qnorm 2\n");
+    fprintf(f, "splot '-' u 1:2:3 w l\n");
     fprintf(f, "# X Y Z\n");
-    for(int i=0; i < points-1; ++i)
-        for(int j=0; j < points-1; ++j)
-            fprintf(f, "# %f %f %f \n", i*hx, j*hy, x[i+j*points]);
+    for(int i=0; i < nx; ++i)
+        for(int j=0; j < ny; ++j) 
+            fprintf(f, "%.17g %.17g %.17g\n", i*hx, j*hy, (*x)[(i*ny)+j]);
     fclose(f);
 }
 
