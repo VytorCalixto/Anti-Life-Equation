@@ -16,6 +16,14 @@ double f(double x, double y);
 double topFrontier(double x);
 double bottomFrontier(double x);
 
+typedef struct{
+    double dg; //diagonal, Ui,j
+    double up; //up, Ui+1,j
+    double dw; //down, Ui-1,j
+    double rt; //right, Ui,j+1
+    double lt; //left, Ui,j-1
+} Point;
+
 int main(int argc, char** argv){
     double hx, hy;
     int maxIter;
@@ -28,10 +36,11 @@ int main(int argc, char** argv){
     int points = (nx)*(ny);
     printf("#INFO: Number of points(NX x NY): %d %d\n", nx, ny);
     printf("#INFO: Overrelaxation factor: %f\n", omega);
-    double *a, *b, *x;
+    Point *a;
+    double *b, *x;
 
-    a = malloc(points*points*sizeof(double));
-    memset(a, 0, points*points*sizeof(double));
+    a = malloc(points*sizeof(Point));
+    memset(a, 0, points*sizeof(Point));
     b = malloc(points*sizeof(double));
     x = malloc(points*sizeof(double));
     memset(x, 0, points*sizeof(double));
@@ -61,24 +70,24 @@ int main(int argc, char** argv){
 
     for(int i=0; i < points; ++i) {
         int mod = i % (nx);
-        a[i*points+i] = denominator;
+        a[i].dg = denominator;
         if(mod > 0) {
-            a[i*points+i-1] = left;
+            a[i].lt = left;
         }
 
         if(mod < (nx-1)) {
-            a[i*points+i+1] = right;
+            a[i].rt = right;
         }
 
         if(i >= ny) {
-            a[i*points + i - ny] = down;
+            a[i].dw = down;
         } else {
             // b[i] -= down*a[i*points + i - ny];
             b[i] -= down*bottomFrontier(i*hx);
         }
 
         if(i < (points - ny)) {
-            a[i*points + i + ny] = up;
+            a[i].up = up;
         } else {
             // b[i] -= up*a[i*points + i + (ny+1)];
             b[i] -= up*topFrontier(mod*hx);
@@ -90,13 +99,29 @@ int main(int argc, char** argv){
     while(maxIter--) {
         for(int i=0; i < points; ++i) {
             double r = 0;
-            for(int j=0; j < i; ++j) {
-                r += a[i*points + j]*x[j];
+            // for(int j=0; j < i; ++j) {
+            //     r += a[i*points + j]*x[j];
+            // }
+            // for(int j=i+1; j < points; ++j) {
+            //     r += a[i*points + j]*x[j];
+            // }
+            int mod = i % (nx);
+            if(mod > 0) {
+                r += a[i].lt*x[i-1];
             }
-            for(int j=i+1; j < points; ++j) {
-                r += a[i*points + j]*x[j];
+
+            if(mod < (nx-1)) {
+                r += a[i].rt*x[i+1];
             }
-            x[i] = x[i] + omega*((b[i]-r)/a[i*points + i] - x[i]);
+
+            if(i >= ny) {
+                r += a[i].dw*x[i-ny];
+            }
+
+            if(i < (points - ny)) {
+                r += a[i].up*x[i+ny];
+            }
+            x[i] = x[i] + omega*((b[i]-r)/a[i].dg - x[i]);
         }
     }
     double t1 = timestamp();
