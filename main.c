@@ -30,22 +30,38 @@ int main(int argc, char** argv){
     int maxIter;
     char* path;
     parseArgs(argc,&argv,&hx,&hy,&maxIter,&path);
-    printf("#hx %f hy %f i %d path %s \n", hx, hy, maxIter, path);
+    // printf("#hx %f hy %f i %d path %s \n", hx, hy, maxIter, path);
     double omega = 2 - ((hx+hy)/2);
     int nx = round(PI/hx) + 1;
     int ny = round(PI/hy) + 1;
     int points = (nx)*(ny);
-    printf("#INFO: Number of points(NX x NY): %d x %d\n", nx, ny);
-    printf("#INFO: Overrelaxation factor: %f\n", omega);
+    // printf("#INFO: Number of points(NX x NY): %d x %d\n", nx, ny);
+    // printf("#INFO: Overrelaxation factor: %f\n", omega);
     Point *a;
     double *b, *x, *resNorms;
 
     a = malloc(points*sizeof(Point));
+    if(a == NULL) {
+        fprintf(stderr, "Erro ao alocar vetor A\n");
+        exit(1);
+    }
     memset(a, 0, points*sizeof(Point));
     b = malloc(points*sizeof(double));
+    if(b == NULL) {
+        fprintf(stderr, "Erro ao alocar vetor B\n");
+        exit(1);
+    }
     x = malloc(points*sizeof(double));
+    if(x == NULL) {
+        fprintf(stderr, "Erro ao alocar vetor X\n");
+        exit(1);
+    }
     memset(x, 0, points*sizeof(double));
     resNorms = malloc(maxIter*sizeof(double));
+    if(resNorms == NULL) {
+        fprintf(stderr, "Erro ao alocar vetor da norma dos resíduos\n");
+        exit(1);
+    }
     memset(resNorms, 0, maxIter*sizeof(double));
 
     double hxx = hx*hx;
@@ -79,14 +95,12 @@ int main(int argc, char** argv){
         if(i >= nx) {
             a[i].dw = down;
         } else {
-            // b[i] -= down*a[i*points + i - ny];
             b[i] -= down*bottomFrontier(i*hx);
         }
 
         if(i < (points - nx)) {
             a[i].up = up;
         } else {
-            // b[i] -= up*a[i*points + i + (ny+1)];
             b[i] -= up*topFrontier(mod*hx);
         }
     }
@@ -121,14 +135,7 @@ int main(int argc, char** argv){
     }
     double t1 = timestamp();
 
-    printf("#INFO: tempo = %f\n", t1-t0);
-
-    // for(int i=0; i < ny;  ++i) {
-    //     for(int j=0; j < nx; ++j) {
-    //         printf("%f\t", x[i*nx + j]);
-    //     }
-    //     puts("");
-    // }
+    // printf("#INFO: tempo = %f\n", t1-t0);
 
     writeData(path, (t1-t0)/maxIter, (t1-t0)/maxIter, maxIter, &resNorms, nx, ny, hx, hy, &x);
 
@@ -216,7 +223,6 @@ double timestamp(void) {
 double f(double x, double y) {
     // f(x, y) = 4pi²[sin(2pix)sinh(piy)+sin(2pi(pi-x))sinh(pi(pi-y))]
     double r = 4*PI_SQUARE*(sin(2*PI*x)*sinh(PI*y)+sin(2*PI*(PI-x))*sinh(PI*(PI-y)));
-    // printf("%f, %f=%f\t", x, y, r);
     return r;
 }
 
