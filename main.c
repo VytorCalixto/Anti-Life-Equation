@@ -34,7 +34,7 @@ int main(int argc, char** argv){
     int nx = round(PI/hx) + 1;
     int ny = round(PI/hy) + 1;
     int points = (nx)*(ny);
-    printf("#INFO: Number of points(NX x NY): %d %d\n", nx, ny);
+    printf("#INFO: Number of points(NX x NY): %d x %d\n", nx, ny);
     printf("#INFO: Overrelaxation factor: %f\n", omega);
     Point *a;
     double *b, *x;
@@ -49,9 +49,9 @@ int main(int argc, char** argv){
     double hyy = hy*hy;
 
     // Set initial value to B
-    for(int i=0; i < nx; ++i) {
-        for(int j=0; j < ny; ++j) {
-            b[i*nx+j] = 2*f(i*hx, j*hy)*hxx*hyy;
+    for(int i=0; i < ny; ++i) {
+        for(int j=0; j < nx; ++j) {
+            b[i*nx+j] = 2*f(j*hx, i*hy)*hxx*hyy;
         }
     }
 
@@ -79,14 +79,14 @@ int main(int argc, char** argv){
             a[i].rt = right;
         }
 
-        if(i >= ny) {
+        if(i >= nx) {
             a[i].dw = down;
         } else {
             // b[i] -= down*a[i*points + i - ny];
             b[i] -= down*bottomFrontier(i*hx);
         }
 
-        if(i < (points - ny)) {
+        if(i < (points - nx)) {
             a[i].up = up;
         } else {
             // b[i] -= up*a[i*points + i + (ny+1)];
@@ -114,12 +114,12 @@ int main(int argc, char** argv){
                 r += a[i].rt*x[i+1];
             }
 
-            if(i >= ny) {
-                r += a[i].dw*x[i-ny];
+            if(i >= nx) {
+                r += a[i].dw*x[i-nx];
             }
 
-            if(i < (points - ny)) {
-                r += a[i].up*x[i+ny];
+            if(i < (points - nx)) {
+                r += a[i].up*x[i+nx];
             }
             x[i] = x[i] + omega*((b[i]-r)/a[i].dg - x[i]);
         }
@@ -135,9 +135,9 @@ int main(int argc, char** argv){
     //     puts("");
     // }
     //
-    for(int i=0; i < nx;  ++i) {
-        for(int j=0; j < ny; ++j) {
-            printf("%f\t", i, j, x[i*nx + j]);
+    for(int i=0; i < ny;  ++i) {
+        for(int j=0; j < nx; ++j) {
+            printf("%f\t", x[i*nx + j]);
         }
         puts("");
     }
