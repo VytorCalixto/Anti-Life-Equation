@@ -24,12 +24,11 @@ int main(int argc, char** argv){
     double sorFactor = 2 - ((hx+hy)/2);
     int nx = round(PI/hx) + 1;
     int ny = round(PI/hy) + 1;
-    int points = (nx+2)*(ny+2);
+    int points = (nx)*(ny);
     printf("INFO: Number of points(NX x NY): %d %d\n", nx, ny);
     printf("INFO: Overrelaxation factor: %f\n", sorFactor);
     double *a, *b, *x;
-    // allocating (nx+2) * (ny+2) to include the borders
-    // access a[i][j] by using a[i+j*(nx+2)]
+
     a = malloc(points*points*sizeof(double));
     memset(a, 0, points*points*sizeof(double));
     b = malloc(points*sizeof(double));
@@ -40,17 +39,17 @@ int main(int argc, char** argv){
     double hyy = hy*hy;
 
     // Set initial value to B
-    for(int i=0; i < nx+2; ++i) {
-        for(int j=0; j < ny+2; ++j) {
-            b[i*(nx+2)+j] = 2*f(i*hx, j*hy)*hxx*hyy;
+    for(int i=0; i < nx; ++i) {
+        for(int j=0; j < ny; ++j) {
+            b[i*nx+j] = 2*f(i*hx, j*hy)*hxx*hyy;
         }
     }
 
-    // Set top and bottom borders
-    for(int i=0; i <points; ++i) {
-        a[i] = bottomFrontier(i*hx);
-        a[(points-1)*(points) + i] = topFrontier(i*hx);
-    }
+    // for(int i=0; i < nx;  ++i) {
+    //     for(int j=0; j < ny; ++j) {
+    //         printf("(%d,%d): %f\n", i, j, b[i*nx + j]);
+    //     }
+    // }
 
     double denominator = 4*(2*PI_SQUARE*hxx*hyy+hxx+hyy);
     double up, left, right, down;
@@ -59,40 +58,65 @@ int main(int argc, char** argv){
     right = hxx*hy-2*hxx;
     left = -(hxx*hy+2*hxx);
 
-    for(int i=1; i < points-1; ++i) {
-        int mod = i%(nx+2);
+    for(int i=0; i < points; ++i) {
+        int mod = i % (nx);
         a[i*points+i] = denominator;
-        if(mod > 1) {
+        if(mod > 0) {
             a[i*points+i-1] = left;
         }
 
-        if(mod < (nx+1)) {
+        if(mod < (nx-1)) {
             a[i*points+i+1] = right;
         }
 
-        if(i-(ny+2) > (ny+1)) {
-            a[i*points + i - (ny+1)] = down;
+        if(i >= ny) {
+            a[i*points + i - ny] = down;
         } else {
-            b[i] -= down*a[i*points + i - (ny+1)];
+            // b[i] -= down*a[i*points + i - ny];
+            b[i] -= down*bottomFrontier(i*hx);
         }
 
-        if(i < (points-1 - (ny+2))) {
-            a[i*points + i + (ny+1)] = up;
+        if(i < (points - ny)) {
+            a[i*points + i + ny] = up;
         } else {
-            b[i] -= up*a[i*points + i + (ny+1)];
+            // b[i] -= up*a[i*points + i + (ny+1)];
+            b[i] -= up*topFrontier(mod*hx);
         }
     }
 
-    // for(int i=1; i < points-1; ++i) {
-    //     for(int j=1; j < points-1; ++j) {
+    // SOR
+    double t0 = timestamp();
+    while(maxIter--) {
+        for(int i=0; i < points; ++i) {
+            double r = 0;
+            for(int j=0; j < points; ++j) {
+                if(i!=j) {
+                    r += a[i*points + j]*x[i];
+                }
+            }
+            x[i] += sorFactor*((b[i]-r)/a[i*points + i] - x[i]);
+        }
+    }
+    double t1 = timestamp();
+
+    printf("INFO: tempo = %f\n", t1-t0);
+
+    // for(int i=0; i < points; ++i) {
+    //     for(int j=0; j < points; ++j) {
     //         printf("%f\t", a[i*points+j]);
     //     }
     //     puts("");
     // }
+    //
+    // for(int i=0; i < nx;  ++i) {
+    //     for(int j=0; j < ny; ++j) {
+    //         printf("(%d,%d): %f\n", i, j, x[i*nx + j]);
+    //     }
+    // }
 
-    free(a);
-    free(b);
-    free(x);
+    // free(a);
+    // free(b);
+    // free(x);
 
     return 0;
 }
@@ -145,7 +169,9 @@ double timestamp(void) {
 
 double f(double x, double y) {
     // f(x, y) = 4pi²[sin(2pix)sinh(piy)+sin(2pi(pi-x))sinh(pi(pi-y))]
-    return 4*PI_SQUARE*(sin(2*PI*x)*sinh(PI*y)+sin(2*PI_SQUARE-2*PI*x)*sinh(PI_SQUARE*PI-y));
+    double r = 4*PI_SQUARE*(sin(2*PI*x)*sinh(PI*y)+sin(2*PI*(PI-x))*sinh(PI*(PI-y)));
+    // printf("%f, %f=%f\t", x, y, r);
+    return r;
 }
 
 double topFrontier(double x) {
