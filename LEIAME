@@ -7,3 +7,15 @@ main.c - Código fonte contendo todas as funções do programa
 Makefile - Arquivo Makefile com as regras all e clean
 
 Relatório sobre a implementação:
+
+Iniciamos o trabalho substituindo as derivadas na equação por diferenças centrais e isolando o Ui,j para conseguir a função de atualização. Com essa função isolamos cada Uij e seus coeficientes.
+
+Tendo a equação, começamos o programa pela leitura dos parâmetros e calculando a quantidade de pontos e ômega. Numa primeira versão, alocávamos a matriz A inteira, guardando os 0s, para testar se o algoritmo funcionava. Nesta versão, conseguimos aplicar o SOR com sucesso.
+
+Entretanto, a matriz ocupava uma quantidade de memória considerável. Testamos nosso código principalmente com os intervalos sendo potência de 2. Para 2^-6 a matriz A iria ocupar 12.9G de memória.
+
+Para resolver esse problema, criamos uma estrutura chamada Point que representava os coeficientes de Ui,j, Ui+1,j, Ui-1,j, Ui,j+1, Ui,j-1. Assim, alocávamos nx*ny*5*tamanho-de-double para representar a matriz A, em vez de nx²*ny²*tamanho-de-double anteriormente.
+
+Alteramos então o SOR para trabalhar com essa estrutura de dados e com isso funcionando, fizemos o cálculo da norma L² do resíduo e a função para escrever o arquivo de saída. Por último, realizamos testes com valores diversos (mas principalmente potências de 2) para testar a execução do programa.
+
+Bugs conhecidos:
