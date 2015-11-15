@@ -19,7 +19,6 @@ int main(int argc, char** argv){
     double hx, hy;
     int maxIter;
     char* path;
-    int i=0;
     parseArgs(argc,&argv,&hx,&hy,&maxIter,&path);
     printf("hx %f hy %f i %d path %s \n", hx, hy, maxIter, path);
     double sorFactor = 2 - ((hx+hy)/2);
@@ -41,54 +40,55 @@ int main(int argc, char** argv){
     double hyy = hy*hy;
 
     // Set initial value to B
-    for(int j=0; j < nx+2; ++j) {
-        for(int k=0; k < ny+2; ++k) {
-            b[j+k*(nx+2)] = 2*f(j*hx, k*hy)*hxx*hyy;
+    for(int i=0; i < nx+2; ++i) {
+        for(int j=0; j < ny+2; ++j) {
+            b[i*(nx+2)+j] = 2*f(i*hx, j*hy)*hxx*hyy;
         }
     }
 
     // Set top and bottom borders
-    for(int j=0; j <points; ++j) {
-        a[0 + j*(points)] = bottomFrontier(j*hx);
-        a[points-1 + j*(points)] = topFrontier(j*hx);
+    for(int i=0; i <points; ++i) {
+        a[i] = bottomFrontier(i*hx);
+        a[(points-1)*(points) + i] = topFrontier(i*hx);
     }
 
-    double denominator = (4*(2*PI_SQUARE*hxx*hyy+hxx+hyy));
+    double denominator = 4*(2*PI_SQUARE*hxx*hyy+hxx+hyy);
     double up, left, right, down;
     up = hx*hyy-2*hyy;
     down = -(hx*hyy+2*hyy);
     right = hxx*hy-2*hxx;
     left = -(hxx*hy+2*hxx);
 
-    for(int j=1; j < points-1; ++j) {
-        a[j+j*points] = denominator;
-        for(int k=1; k < points-1; ++k) {
-            if(j > 1 ) {
-                a[(j-1) + k*points] = down;
-            } else {
-                b[k] -= down*a[(j-1) + k*points];
-            }
+    for(int i=1; i < points-1; ++i) {
+        int mod = i%(nx+2);
+        a[i*points+i] = denominator;
+        if(mod > 1) {
+            a[i*points+i-1] = left;
+        }
 
-            if(j < (points-1)) {
-                a[(j+1) + k*points] = up;
-            } else {
-                b[k] -= up*a[(j+1) + k*points];
-            }
+        if(mod < (nx+1)) {
+            a[i*points+i+1] = right;
+        }
 
-            if(k > 1) {
-                a[j + (k-1)*points] = left;
-            } else {
-                b[k] = left*a[j + (k-1)*points];
-            }
+        if(i-(ny+2) > (ny+1)) {
+            a[i*points + i - (ny+1)] = down;
+        } else {
+            b[i] -= down*a[i*points + i - (ny+1)];
+        }
 
-            if(k < (points-1)) {
-                a[j + (k+1)*points] = right;
-            } else {
-                b[k] = right*a[j + (k+1)*points];
-            }
-
+        if(i < (points-1 - (ny+2))) {
+            a[i*points + i + (ny+1)] = up;
+        } else {
+            b[i] -= up*a[i*points + i + (ny+1)];
         }
     }
+
+    // for(int i=1; i < points-1; ++i) {
+    //     for(int j=1; j < points-1; ++j) {
+    //         printf("%f\t", a[i*points+j]);
+    //     }
+    //     puts("");
+    // }
 
     free(a);
     free(b);
