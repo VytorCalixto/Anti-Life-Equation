@@ -10,7 +10,7 @@
 
 void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
     char** path);
-void writeData(char* path, double sorTime, double resTime, int maxIter, double** resNorms, int points, double hx, double hy, double** x);
+void writeData(char* path, double sorTime, double resTime, int maxIter, double** resNorms, int nx, int ny, double hx, double hy, double** u);
 double timestamp(void);
 double f(double x, double y);
 double topFrontier(double x);
@@ -29,11 +29,13 @@ int main(int argc, char** argv){
     int points = nx*ny;
     printf("INFO: Number of points(NX x NY): %d %d\n", nx, ny);
     printf("INFO: Overrelaxation factor: %f\n", sorFactor);
-    double *a, *b, *x, *u;
+    double *resNorms, *u;
     // allocating (nx+2) * (ny+2) to include the borders
     // access a[i][j] by using a[i+j*(nx+2)]
     u = malloc(points*sizeof(double));
     memset(u, 0, points*sizeof(double));
+    resNorms = malloc(maxIter*sizeof(double));
+    memset(resNorms , 0, maxIter*sizeof(double));
     // a = malloc(points*points*sizeof(double));
     // memset(a, 0, points*points*sizeof(double));
     // b = malloc(points*sizeof(double));
@@ -63,9 +65,7 @@ int main(int argc, char** argv){
     */
     for(int i=0; i <nx; ++i) {
         u[i*ny] = bottomFrontier(i*hx);
-        double lol = topFrontier(i*hx);
-        printf("lol %f \n", lol);
-        u[(i*ny)+(ny-1)] = lol;
+        u[(i*ny)+(ny-1)] = topFrontier(i*hx);
     }
 
     double up, left, right, down, fconst;
@@ -87,14 +87,17 @@ int main(int argc, char** argv){
         //TODO: calculate errors
     }
 
-    for (int j = ny-1; j >= 0; --j)
-    {
-        for (int i = 0; i < nx; ++i)
-        {
-            printf("%f ", u[(i*ny)+j]);
-        }
-        printf("\n");
-    }
+
+    // for (int j = ny-1; j >= 0; --j)
+    // {
+    //     for (int i = 0; i < nx; ++i)
+    //     {
+    //         printf("%f ", u[(i*ny)+j]);
+    //     }
+    //     printf("\n");
+    // }
+
+    writeData(path, 0, 0, maxIter, &resNorms, nx, ny, hx, hy, &u);
 
     // double denominator = (4*(2*PI_SQUARE*hxx*hyy+hxx+hyy));
 
@@ -183,7 +186,7 @@ void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
 }
 
 void writeData(char* path, double sorTime, double resTime, int maxIter,
-    double** resNorms, int points, double hx, double hy, double** x){
+    double** resNorms, int nx, int ny, double hx, double hy, double** u){
     FILE *f = fopen(path, "w");
     if (f == NULL)
     {
@@ -199,10 +202,13 @@ void writeData(char* path, double sorTime, double resTime, int maxIter,
         fprintf(f, "# i= %d: %f\n", i+1, (*resNorms)[i]);
     }
     fprintf(f, "###########\n");
+    fprintf(f, "set hidden3d\n");
+    fprintf(f, "set dgrid3d 50,50 qnorm 2\n");
+    fprintf(f, "splot '-' u 1:2:3 w l\n");
     fprintf(f, "# X Y Z\n");
-    for(int i=0; i < points-1; ++i)
-        for(int j=0; j < points-1; ++j) 
-            fprintf(f, "# %f %f %f \n", i*hx, j*hy, x[i+j*points]);
+    for(int i=0; i < nx; ++i)
+        for(int j=0; j < ny; ++j) 
+            fprintf(f, "%.17g %.17g %.17g\n", i*hx, j*hy, (*u)[(i*ny)+j]);
     fclose(f);
 }
 
