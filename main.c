@@ -19,80 +19,124 @@ int main(int argc, char** argv){
     double hx, hy;
     int maxIter;
     char* path;
-    int i=0;
     parseArgs(argc,&argv,&hx,&hy,&maxIter,&path);
     printf("hx %f hy %f i %d path %s \n", hx, hy, maxIter, path);
     double sorFactor = 2 - ((hx+hy)/2);
     int nx = round(PI/hx) + 1;
     int ny = round(PI/hy) + 1;
-    int points = (nx+2)*(ny+2);
+    // int points = (nx+2)*(ny+2);
+    int points = nx*ny;
     printf("INFO: Number of points(NX x NY): %d %d\n", nx, ny);
     printf("INFO: Overrelaxation factor: %f\n", sorFactor);
-    double *a, *b, *x;
+    double *a, *b, *x, *u;
     // allocating (nx+2) * (ny+2) to include the borders
     // access a[i][j] by using a[i+j*(nx+2)]
-    a = malloc(points*points*sizeof(double));
-    memset(a, 0, points*points*sizeof(double));
-    b = malloc(points*sizeof(double));
-    x = malloc(points*sizeof(double));
-    memset(x, 0, points*sizeof(double));
+    u = malloc(points*sizeof(double));
+    memset(u, 0, points*sizeof(double));
+    // a = malloc(points*points*sizeof(double));
+    // memset(a, 0, points*points*sizeof(double));
+    // b = malloc(points*sizeof(double));
+    // x = malloc(points*sizeof(double));
+    // memset(x, 0, points*sizeof(double));
 
     double hxx = hx*hx;
     double hyy = hy*hy;
 
-    // Set initial value to B
-    for(int j=0; j < nx+2; ++j) {
-        for(int k=0; k < ny+2; ++k) {
-            b[j+k*(nx+2)] = 2*f(j*hx, k*hy)*hxx*hyy;
-        }
-    }
+    // // Set initial value to B
+    // for(int j=0; j < nx+2; ++j) {
+    //     for(int k=0; k < ny+2; ++k) {
+    //         b[j+k*(nx+2)] = 2*f(j*hx, k*hy)*hxx*hyy;
+    //     }
+    // }
 
     // Set top and bottom borders
-    for(int j=0; j <points; ++j) {
-        a[0 + j*(points)] = bottomFrontier(j*hx);
-        a[points-1 + j*(points)] = topFrontier(j*hx);
+    // for(int i=0; i <points; ++i) {
+    //     a[0 + i*(points)] = bottomFrontier(i*hx);
+    //     a[points-1 + i*(points)] = topFrontier(i*hx);
+    // }
+
+    /* 
+    * i,j = x,y
+    * i = x = line
+    * j = y = column
+    */
+    for(int i=0; i <nx; ++i) {
+        u[i*ny] = bottomFrontier(i*hx);
+        double lol = topFrontier(i*hx);
+        printf("lol %f \n", lol);
+        u[(i*ny)+(ny-1)] = lol;
     }
 
-    double denominator = (4*(2*PI_SQUARE*hxx*hyy+hxx+hyy));
-    double up, left, right, down;
-    up = hx*hyy-2*hyy;
-    down = -(hx*hyy+2*hyy);
-    right = hxx*hy-2*hxx;
-    left = -(hxx*hy+2*hxx);
+    double up, left, right, down, fconst;
+    up = (2*hxx)-(hxx*hy);
+    down = (hxx*hy)+(2*hxx);
+    right = (2*hyy)-(hx*hyy);
+    left = (hx*hyy)+(2*hyy);
+    fconst = 2*hxx*hyy;
+    double denominator = 1/(4*(2*PI_SQUARE*hxx*hyy+hxx+hyy));
 
-    for(int j=1; j < points-1; ++j) {
-        a[j+j*points] = denominator;
-        for(int k=1; k < points-1; ++k) {
-            if(j > 1 ) {
-                a[(j-1) + k*points] = down;
-            } else {
-                b[k] -= down*a[(j-1) + k*points];
+    for (int k = 0; k < maxIter; ++k){
+        for (int i = 1; i < nx-1; ++i){
+            for (int j = 1; j < ny-1; ++j){
+                u[(i*ny)+j] = (u[((i+1)*ny)+j]*right + u[((i-1)*ny)+j]*left 
+                            + u[(i*ny)+j+1]*up + u[(i*ny)+j-1]*down
+                            + f(i*hx,j*hy)*fconst)*denominator;
             }
-
-            if(j < (points-1)) {
-                a[(j+1) + k*points] = up;
-            } else {
-                b[k] -= up*a[(j+1) + k*points];
-            }
-
-            if(k > 1) {
-                a[j + (k-1)*points] = left;
-            } else {
-                b[k] = left*a[j + (k-1)*points];
-            }
-
-            if(k < (points-1)) {
-                a[j + (k+1)*points] = right;
-            } else {
-                b[k] = right*a[j + (k+1)*points];
-            }
-
         }
+        //TODO: calculate errors
     }
 
-    free(a);
-    free(b);
-    free(x);
+    for (int j = ny-1; j >= 0; --j)
+    {
+        for (int i = 0; i < nx; ++i)
+        {
+            printf("%f ", u[(i*ny)+j]);
+        }
+        printf("\n");
+    }
+
+    // double denominator = (4*(2*PI_SQUARE*hxx*hyy+hxx+hyy));
+
+    // double up, left, right, down;
+    // up = hx*hyy-2*hyy;
+    // down = -(hx*hyy+2*hyy);
+    // right = hxx*hy-2*hxx;
+    // left = -(hxx*hy+2*hxx);
+
+    // for(int j=1; j < points-1; ++j) {
+    //     a[j+j*points] = denominator;
+    //     for(int k=1; k < points-1; ++k) {
+    //         if(j > 1 ) {
+    //             a[(j-1) + k*points] = down;
+    //         } else {
+    //             b[k] -= down*a[(j-1) + k*points];
+    //         }
+
+    //         if(j < (points-1)) {
+    //             a[(j+1) + k*points] = up;
+    //         } else {
+    //             b[k] -= up*a[(j+1) + k*points];
+    //         }
+
+    //         if(k > 1) {
+    //             a[j + (k-1)*points] = left;
+    //         } else {
+    //             b[k] = left*a[j + (k-1)*points];
+    //         }
+
+    //         if(k < (points-1)) {
+    //             a[j + (k+1)*points] = right;
+    //         } else {
+    //             b[k] = right*a[j + (k+1)*points];
+    //         }
+
+    //     }
+    // }
+
+    free(u);
+    // free(a);
+    // free(b);
+    // free(x);
 
     return 0;
 }
