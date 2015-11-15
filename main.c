@@ -90,10 +90,11 @@ int main(int argc, char** argv){
     while(maxIter--) {
         for(int i=0; i < points; ++i) {
             double r = 0;
-            for(int j=0; j < points; ++j) {
-                if(i!=j) {
-                    r += a[i*points + j]*x[i];
-                }
+            for(int j=0; j < i; ++j) {
+                r += a[i*points + j]*x[i];
+            }
+            for(int j=i+1; j < points; ++j) {
+                r += a[i*points + j]*x[i];
             }
             x[i] += sorFactor*((b[i]-r)/a[i*points + i] - x[i]);
         }
@@ -109,11 +110,12 @@ int main(int argc, char** argv){
     //     puts("");
     // }
     //
-    // for(int i=0; i < nx;  ++i) {
-    //     for(int j=0; j < ny; ++j) {
-    //         printf("(%d,%d): %f\n", i, j, x[i*nx + j]);
-    //     }
-    // }
+    for(int i=0; i < nx;  ++i) {
+        for(int j=0; j < ny; ++j) {
+            printf("%f\t", i, j, x[i*nx + j]);
+        }
+        puts("");
+    }
 
     // free(a);
     // free(b);
@@ -181,7 +183,7 @@ void writeData(char* path, double sorTime, double resTime, int maxIter,
     fprintf(f, "###########\n");
     fprintf(f, "# X Y Z\n");
     for(int i=0; i < points-1; ++i)
-        for(int j=0; j < points-1; ++j) 
+        for(int j=0; j < points-1; ++j)
             fprintf(f, "# %f %f %f \n", i*hx, j*hy, x[i+j*points]);
     fclose(f);
 }
