@@ -101,7 +101,7 @@ int main(int argc, char** argv){
         if(i < (points - nx)) {
             a[i].up = up;
         } else {
-            b[i] -= up*topFrontier(mod*hx);
+            b[i] -= up*topFrontier(i*hx);
         }
     }
 
@@ -205,16 +205,16 @@ void writeData(char* path, double sorTime, double resTime, int maxIter,
     fprintf(f, "###########\n");
     fprintf(f, "set terminal wxt persist\n");
     fprintf(f, "set hidden3d\n");
-    int grid = (nx > 100 || ny > 100) ? 100 : ((nx > ny)? nx : ny);
+    int grid = (nx > 100 || ny > 100) ? 50 : ((nx > ny)? nx : ny);
     fprintf(f, "set dgrid3d %d,%d qnorm 2\n", grid, grid);
     fprintf(f, "set xlabel 'Y'\n");
     fprintf(f, "set ylabel 'X'\n");
     fprintf(f, "set zlabel 'u(x,y)'\n");
     fprintf(f, "splot '-' u 1:2:3 w l\n");
     fprintf(f, "# X Y Z\n");
-    for(int i=0; i < nx; ++i)
-        for(int j=0; j < ny; ++j)
-            fprintf(f, "%.17g %.17g %.17g\n", i*hx, j*hy, (*x)[(i*ny)+j]);
+    for(int i=0; i < ny; ++i)
+        for(int j=0; j < nx; ++j)
+            fprintf(f, "%.17g %.17g %.17g\n", i*hx, j*hy, (*x)[(i*nx)+j]);
     fclose(f);
 }
 
