@@ -16,6 +16,7 @@ double timestamp(void);
 double f(double x, double y);
 double topFrontier(double x);
 double bottomFrontier(double x);
+double calculateResidual(double** b, double** x, int points);
 
 typedef struct{
     double dg; //diagonal, Ui,j
@@ -126,11 +127,10 @@ int main(int argc, char** argv){
             if(i < (points - nx)) {
                 r += a[i].up*x[i+nx];
             }
-            double residual = ((b[i]-r)/a[i].dg - x[i]);
-            resNorms[iter] += residual;
+            double residual = ((b[i]-r)/a[i].dg-x[i]);
             x[i] = x[i] + omega*residual;
         }
-        resNorms[iter] = sqrt(fabs(resNorms[iter]));
+        resNorms[iter] = calculateResidual(&b,&x,points);
     }
     double t1 = timestamp();
 
@@ -143,6 +143,15 @@ int main(int argc, char** argv){
     free(x);
 
     return 0;
+}
+
+double calculateResidual(double** b, double** x, int points){
+    double residual = 0;
+    for (int i = 0; i < points; ++i){
+        double res = ((*b)[i]-(*x)[i]);
+        residual += res*res;
+    }
+    return sqrt(residual);
 }
 
 void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
@@ -205,8 +214,6 @@ void writeData(char* path, double sorTime, double resTime, int maxIter,
     fprintf(f, "###########\n");
     fprintf(f, "set terminal wxt persist\n");
     fprintf(f, "set hidden3d\n");
-    int grid = (nx > 100 || ny > 100) ? 50 : ((nx > ny)? nx : ny);
-    fprintf(f, "set dgrid3d %d,%d qnorm 2\n", grid, grid);
     fprintf(f, "set xlabel 'Y'\n");
     fprintf(f, "set ylabel 'X'\n");
     fprintf(f, "set zlabel 'u(x,y)'\n");
