@@ -16,7 +16,6 @@ double timestamp(void);
 double f(double x, double y);
 double topFrontier(double x);
 double bottomFrontier(double x);
-double calculateResidual(double** b, double** x, int points);
 
 typedef struct{
     double dg; //diagonal, Ui,j
@@ -25,6 +24,8 @@ typedef struct{
     double rt; //right, Ui,j+1
     double lt; //left, Ui,j-1
 } Point;
+
+double calculateResidual(Point** a, double** b, double** x, int nx, int ny);
 
 int main(int argc, char** argv){
     double hx, hy;
@@ -130,7 +131,7 @@ int main(int argc, char** argv){
             double residual = ((b[i]-r)/a[i].dg-x[i]);
             x[i] = x[i] + omega*residual;
         }
-        resNorms[iter] = calculateResidual(&b,&x,points);
+        resNorms[iter] = calculateResidual(&a, &b, &x, nx, ny);
     }
     double t1 = timestamp();
 
@@ -145,10 +146,28 @@ int main(int argc, char** argv){
     return 0;
 }
 
-double calculateResidual(double** b, double** x, int points){
+double calculateResidual(Point** a, double** b, double** x, int nx, int ny){
     double residual = 0;
+    int points = nx*ny;
     for (int i = 0; i < points; ++i){
-        double res = ((*b)[i]-(*x)[i]);
+        double r = 0;
+        int mod = i % (nx);
+        if(mod > 0) {
+            r += (*a)[i].lt * (*x)[i-1];
+        }
+
+        if(mod < (nx-1)) {
+            r += (*a)[i].rt * (*x)[i+1];
+        }
+
+        if(i >= nx) {
+            r += (*a)[i].dw * (*x)[i-nx];
+        }
+
+        if(i < (points - nx)) {
+            r += (*a)[i].up * (*x)[i+nx];
+        }
+        double res = ((*b)[i] - r);
         residual += res*res;
     }
     return sqrt(residual);
