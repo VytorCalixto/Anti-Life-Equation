@@ -82,31 +82,48 @@ int main(int argc, char** argv){
 
     likwid_markerInit();
     // SOR
-    double t0 = timestamp();
-    likwid_markerStartRegion("SOR");
+    double tSor = 0.0;
+    double tRes = 0.0;
+    double t;
     for(int iter=0;iter<maxIter;++iter) {
+        t = timestamp();
+        likwid_markerStartRegion("SOR");
         for(int i=1; i < ny-1; ++i) {
             for(int j=1; j < nx-1; ++j) {
                 int index = i*nx + j;
-                double left = a.lt*x[index-1];
-                double right = a.rt*x[index+1];
-                double down = a.dw*x[index-nx];
-                double up= a.up*x[index+nx];
-                double r = left + right + up + down;
+                double r = a.lt*x[index-1];
+                r += a.rt*x[index+1];
+                r += a.dw*x[index-nx];
+                r += a.up*x[index+nx];
                 double sorResidual = ((b[index]-r)*a.dg-x[index]);
                 x[index] = x[index] + omega*sorResidual;
-                resNorms[iter] += sorResidual * sorResidual;
             }
         }
-        resNorms[iter] = sqrt(resNorms[iter]);
+        likwid_markerStopRegion("SOR");
+        tSor += timestamp() - t;
+        t = timestamp();
+        likwid_markerStartRegion("Residual");
+        double residual = 0;
+        for(int i=1; i < ny; ++i) {
+            for(int j=1; j < nx; ++j) {
+                int index = i*nx + j;
+                double r = a.lt*x[index-1];
+                r += a.rt*x[index+1];
+                r += a.dw*x[index-nx];
+                r += a.up*x[index+nx];
+                double res = (b[index] - r);
+                residual += res*res;
+            }
+        }
+        resNorms[iter] = sqrt(residual);
+        likwid_markerStopRegion("Residual");
+        tRes += timestamp() - t;
     }
-    likwid_markerStopRegion("SOR");
     likwid_markerClose();
-    double t1 = timestamp();
 
     // printf("#INFO: tempo = %f\n", t1-t0);
 
-    writeData(path, (t1-t0)/maxIter, (t1-t0)/maxIter, maxIter, &resNorms, nx, ny, hx, hy, &x);
+    writeData(path, tSor/maxIter, tRes/maxIter, maxIter, &resNorms, nx, ny, hx, hy, &x);
 
     free(b);
     free(x);
