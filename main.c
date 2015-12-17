@@ -26,8 +26,6 @@ typedef struct{
     double lt; //left, Ui,j-1
 } Point;
 
-double calculateResidual(Point** a, double** b, double** x, int nx, int ny);
-
 int main(int argc, char** argv){
     double hx, hy;
     int maxIter;
@@ -110,12 +108,9 @@ int main(int argc, char** argv){
 
     likwid_markerInit();
     // SOR
-    double tSor = 0.0;
-    double tRes = 0.0;
-    double t;
+    double t0 = timestamp();
+    likwid_markerStartRegion("SOR");
     for(int iter=0;iter<maxIter;++iter) {
-        t = timestamp();
-        likwid_markerStartRegion("SOR");
         for(int i=0; i < points; ++i) {
             double r = 0;
             int mod = i % (nx);
@@ -135,54 +130,24 @@ int main(int argc, char** argv){
                 r += a[i].up*x[i+nx];
             }
             double residual = ((b[i]-r)/a[i].dg-x[i]);
+            resNorms[iter] += residual*residual;
             x[i] = x[i] + omega*residual;
         }
-        likwid_markerStopRegion("SOR");
-        tSor += timestamp() - t;
-        t = timestamp();
-        likwid_markerStartRegion("Residual");
-        resNorms[iter] = calculateResidual(&a, &b, &x, nx, ny);
-        likwid_markerStopRegion("Residual");
-        tRes += timestamp() - t;
+        resNorms[iter] = sqrt(resNorms[iter]);
     }
+    likwid_markerStopRegion("SOR");
+    double t1 = timestamp();
     likwid_markerClose();
 
     // printf("#INFO: tempo = %f\n", t1-t0);
 
-    writeData(path, tSor/maxIter, tRes/maxIter, maxIter, &resNorms, nx, ny, hx, hy, &x);
+    writeData(path, (t1-t0)/maxIter, (t1-t0)/maxIter, maxIter, &resNorms, nx, ny, hx, hy, &x);
 
     free(a);
     free(b);
     free(x);
 
     return 0;
-}
-
-double calculateResidual(Point** a, double** b, double** x, int nx, int ny){
-    double residual = 0;
-    int points = nx*ny;
-    for (int i = 0; i < points; ++i){
-        double r = 0;
-        int mod = i % (nx);
-        if(mod > 0) {
-            r += (*a)[i].lt * (*x)[i-1];
-        }
-
-        if(mod < (nx-1)) {
-            r += (*a)[i].rt * (*x)[i+1];
-        }
-
-        if(i >= nx) {
-            r += (*a)[i].dw * (*x)[i-nx];
-        }
-
-        if(i < (points - nx)) {
-            r += (*a)[i].up * (*x)[i+nx];
-        }
-        double res = ((*b)[i] - r);
-        residual += res*res;
-    }
-    return sqrt(residual);
 }
 
 void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,

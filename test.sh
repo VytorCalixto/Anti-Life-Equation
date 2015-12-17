@@ -1,6 +1,6 @@
 make
 
-HEADER="#Points SOR Residual"
+HEADER="#Points\tSOR"
 
 echo -e "$HEADER\n" > timePlot
 echo -e "$HEADER\n" > memPlot
@@ -14,24 +14,24 @@ do
     INTERVAL=$(echo "scale=20; $PI/($i-1)" | bc)
     echo "TIME"
     pdeSolver -hx $INTERVAL -hy $INTERVAL -i 20 -o time
-    TIME=$(cat time | grep Tempo | cut -d ':' -f 2 | tr -d ' ' | tr '\n' '\t')
+    TIME=$(cat time | grep "Tempo Método SOR" | cut -d ':' -f 2 | tr -d ' ')
     echo -e "$i\t$TIME" >> timePlot
     
     echo "MEM"
-    likwid-perfctr -m -f -C 2 -g MEM ./pdeSolver -hx $INTERVAL -hy $INTERVAL -i 20 -o mem > MEM
-    TEXT=$(cat MEM | grep bandwidth | cut -d '|' -f 3 | tr -d ' ' | tr '\n' '\t')
+    likwid-perfctr -m -f -C 0 -g MEM ./pdeSolver -hx $INTERVAL -hy $INTERVAL -i 20 -o mem > MEM
+    TEXT=$(cat MEM | grep bandwidth | cut -d '|' -f 3 | tr -d ' ')
     echo -e "$i\t$TEXT" >> memPlot
     rm MEM
     
     echo "CACHE"
     likwid-perfctr -m -f -C 3 -g CACHE ./pdeSolver -hx $INTERVAL -hy $INTERVAL -i 20 -o cache > CACHE
-    TEXT=$(cat CACHE | grep "data cache miss ratio" | cut -d '|' -f 3 | tr -d ' ' | tr '\n' '\t')
+    TEXT=$(cat CACHE | grep "data cache miss ratio" | cut -d '|' -f 3 | tr -d ' ')
     echo -e "$i\t$TEXT" >> cachePlot
     rm CACHE
 
     echo "FLOPS"
     likwid-perfctr -m -f -C 5 -g FLOPS_DP ./pdeSolver -hx $INTERVAL -hy $INTERVAL -i 20 -o flops >> FLOPS
-    TEXT=$(cat FLOPS | grep "DP MFLOP/s" | cut -d '|' -f 3 | tr -d ' ' | tr '\n' '\t')
+    TEXT=$(cat FLOPS | grep "DP MFLOP/s" | cut -d '|' -f 3 | tr -d ' ')
     echo -e "$i\t$TEXT" >> flopsPlot
     rm FLOPS
 done
