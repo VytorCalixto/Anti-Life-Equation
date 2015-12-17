@@ -110,8 +110,11 @@ int main(int argc, char** argv){
 
     likwid_markerInit();
     // SOR
-    double t0 = timestamp();
+    double tSor = 0.0;
+    double tRes = 0.0;
+    double t;
     for(int iter=0;iter<maxIter;++iter) {
+        t = timestamp();
         likwid_markerStartRegion("SOR");
         for(int i=0; i < points; ++i) {
             double r = 0;
@@ -135,16 +138,18 @@ int main(int argc, char** argv){
             x[i] = x[i] + omega*residual;
         }
         likwid_markerStopRegion("SOR");
+        tSor += timestamp() - t;
+        t = timestamp();
         likwid_markerStartRegion("Residual");
         resNorms[iter] = calculateResidual(&a, &b, &x, nx, ny);
         likwid_markerStopRegion("Residual");
+        tRes += timestamp() - t;
     }
-    double t1 = timestamp();
     likwid_markerClose();
 
     // printf("#INFO: tempo = %f\n", t1-t0);
 
-    writeData(path, (t1-t0)/maxIter, (t1-t0)/maxIter, maxIter, &resNorms, nx, ny, hx, hy, &x);
+    writeData(path, tSor/maxIter, tRes/maxIter, maxIter, &resNorms, nx, ny, hx, hy, &x);
 
     free(a);
     free(b);
