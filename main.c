@@ -36,22 +36,28 @@ int main(int argc, char** argv){
     int nx = round(PI/hx) + 1;
     int ny = round(PI/hy) + 1;
     int points = (nx)*(ny);
+    int allocSize = points;
+    int nxIter = nx;
+    if((nx != 0) && ((nx & (~nx + 1)) == nx)){
+        allocSize+=nx;
+        ++nx;
+    }
     // printf("#INFO: Number of points(NX x NY): %d x %d\n", nx, ny);
     // printf("#INFO: Overrelaxation factor: %f\n", omega);
     Point a;
     double *b, *x, *resNorms;
 
-    b = malloc(points*sizeof(double));
+    b = malloc(allocSize*sizeof(double));
     if(b == NULL) {
         fprintf(stderr, "Erro ao alocar vetor B\n");
         exit(1);
     }
-    x = malloc(points*sizeof(double));
+    x = malloc(allocSize*sizeof(double));
     if(x == NULL) {
         fprintf(stderr, "Erro ao alocar vetor X\n");
         exit(1);
     }
-    memset(x, 0, points*sizeof(double));
+    memset(x, 0, allocSize*sizeof(double));
     resNorms = malloc(maxIter*sizeof(double));
     if(resNorms == NULL) {
         fprintf(stderr, "Erro ao alocar vetor da norma dos resíduos\n");
@@ -64,7 +70,7 @@ int main(int argc, char** argv){
 
     // Set initial value to B
     for(int i=0; i < ny; ++i) {
-        for(int j=0; j < nx; ++j) {
+        for(int j=0; j < nxIter; ++j) {
             b[i*nx+j] = 2*f(j*hx, i*hy)*hxx*hyy;
         }
     }
@@ -75,7 +81,7 @@ int main(int argc, char** argv){
     a.rt = hxx*hy-2*hxx;
     a.lt = -(hxx*hy+2*hxx);
     
-    for(int i=0; i < nx; ++i) {
+    for(int i=0; i < nxIter; ++i) {
         x[i] = bottomFrontier(i*hx);
         x[points-nx+i] = topFrontier(i*hx);
     }
@@ -89,7 +95,7 @@ int main(int argc, char** argv){
         t = timestamp();
         likwid_markerStartRegion("SOR");
         for(int i=1; i < ny-1; ++i) {
-            for(int j=1; j < nx-1; ++j) {
+            for(int j=1; j < nxIter-1; ++j) {
                 int index = i*nx + j;
                 double r = a.lt*x[index-1];
                 r += a.rt*x[index+1];
@@ -104,8 +110,8 @@ int main(int argc, char** argv){
         t = timestamp();
         likwid_markerStartRegion("Residual");
         double residual = 0;
-        for(int i=1; i < ny; ++i) {
-            for(int j=1; j < nx; ++j) {
+        for(int i=1; i < ny-1; ++i) {
+            for(int j=1; j < nxIter-1; ++j) {
                 int index = i*nx + j;
                 double r = a.lt*x[index-1];
                 r += a.rt*x[index+1];
@@ -123,7 +129,7 @@ int main(int argc, char** argv){
 
     // printf("#INFO: tempo = %f\n", t1-t0);
 
-    writeData(path, tSor/maxIter, tRes/maxIter, maxIter, &resNorms, nx, ny, hx, hy, &x);
+    writeData(path, tSor/maxIter, tRes/maxIter, maxIter, &resNorms, nxIter, ny, hx, hy, &x);
 
     free(b);
     free(x);

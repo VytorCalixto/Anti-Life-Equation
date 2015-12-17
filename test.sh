@@ -13,7 +13,7 @@ do
     PI=$(echo "scale=20; 355/113" | bc)
     INTERVAL=$(echo "scale=20; $PI/($i-1)" | bc)
     echo "TIME"
-    pdeSolver -hx $INTERVAL -hy $INTERVAL -i 20 -o time
+    ./pdeSolver -hx $INTERVAL -hy $INTERVAL -i 20 -o time
     TIME=$(cat time | grep Tempo | cut -d ':' -f 2 | tr -d ' ' | tr '\n' '\t')
     echo -e "$i\t$TIME" >> timePlot
     
