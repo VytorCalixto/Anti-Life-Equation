@@ -76,10 +76,10 @@ int main(int argc, char** argv){
     a.dw = -(hx*hyy+2*hyy);
     a.rt = hxx*hy-2*hxx;
     a.lt = -(hxx*hy+2*hxx);
-
+    
     for(int i=0; i < nx; ++i) {
-        b[i] -= a.dw*bottomFrontier(i*hx);
-        b[points-nx+i] -= a.up*topFrontier(i*hx);
+        x[i] = bottomFrontier(i*hx);
+        x[points-nx+i] = topFrontier(i*hx);
     }
 
     likwid_markerInit();
@@ -87,38 +87,38 @@ int main(int argc, char** argv){
     double tSor = 0.0;
     double tRes = 0.0;
     double t;
-    for(int iter=0;iter<maxIter;++iter) {
-        t = timestamp();
-        likwid_markerStartRegion("SOR");
-        for(int i=0; i < points; ++i) {
-            double r = 0;
-            int mod = i % (nx);
-            if(mod > 0) {
-                r += a.lt*x[i-1];
-            }
+    //for(int iter=0;iter<maxIter;++iter) {
+    //    t = timestamp();
+    //    likwid_markerStartRegion("SOR");
+    //    for(int i=0; i < points; ++i) {
+    //        double r = 0;
+    //        int mod = i % (nx);
+    //        if(mod > 0) {
+    //            r += a.lt*x[i-1];
+    //        }
 
-            if(mod < (nx-1)) {
-                r += a.rt*x[i+1];
-            }
+    //        if(mod < (nx-1)) {
+    //            r += a.rt*x[i+1];
+    //        }
 
-            if(i >= nx) {
-                r += a.dw*x[i-nx];
-            }
+    //        if(i >= nx) {
+    //            r += a.dw*x[i-nx];
+    //        }
 
-            if(i < (points - nx)) {
-                r += a.up*x[i+nx];
-            }
-            double residual = ((b[i]-r)/a.dg-x[i]);
-            x[i] = x[i] + omega*residual;
-        }
-        likwid_markerStopRegion("SOR");
-        tSor += timestamp() - t;
-        t = timestamp();
-        likwid_markerStartRegion("Residual");
-        resNorms[iter] = calculateResidual(&a, &b, &x, nx, ny);
-        likwid_markerStopRegion("Residual");
-        tRes += timestamp() - t;
-    }
+    //        if(i < (points - nx)) {
+    //            r += a.up*x[i+nx];
+    //        }
+    //        double residual = ((b[i]-r)/a.dg-x[i]);
+    //        x[i] = x[i] + omega*residual;
+    //    }
+    //    likwid_markerStopRegion("SOR");
+    //    tSor += timestamp() - t;
+    //    t = timestamp();
+    //    likwid_markerStartRegion("Residual");
+    //    resNorms[iter] = calculateResidual(&a, &b, &x, nx, ny);
+    //    likwid_markerStopRegion("Residual");
+    //    tRes += timestamp() - t;
+    //}
     likwid_markerClose();
 
     // printf("#INFO: tempo = %f\n", t1-t0);
