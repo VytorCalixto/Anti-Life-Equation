@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <math.h>
 #include <string.h>
+#include <likwid.h>
 
 #define PI 3.14159265358979323846
 #define PI_SQUARE 9.86960440108935861883
@@ -107,9 +108,11 @@ int main(int argc, char** argv){
         }
     }
 
+    likwid_markerInit();
     // SOR
     double t0 = timestamp();
     for(int iter=0;iter<maxIter;++iter) {
+        likwid_markerStartRegion("SOR");
         for(int i=0; i < points; ++i) {
             double r = 0;
             int mod = i % (nx);
@@ -131,9 +134,13 @@ int main(int argc, char** argv){
             double residual = ((b[i]-r)/a[i].dg-x[i]);
             x[i] = x[i] + omega*residual;
         }
+        likwid_markerStopRegion("SOR");
+        likwid_markerStartRegion("Residual");
         resNorms[iter] = calculateResidual(&a, &b, &x, nx, ny);
+        likwid_markerStopRegion("Residual");
     }
     double t1 = timestamp();
+    likwid_markerClose();
 
     // printf("#INFO: tempo = %f\n", t1-t0);
 

@@ -1,4 +1,4 @@
-CFLAGS = -lm -std=c99 -Wall -O3 -mavx -march=native
+CFLAGS = -lm -std=c99 -Wall -O3 -mavx -march=native -llikwid
 
 all: main.c
 	gcc -o pdeSolver main.c $(CFLAGS)
