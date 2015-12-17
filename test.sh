@@ -18,7 +18,7 @@ do
     echo -e "$i\t$TIME" >> timePlot
     
     echo "MEM"
-    likwid-perfctr -m -f -C 2 -g MEM ./pdeSolver -hx $INTERVAL -hy $INTERVAL -i 20 -o mem > MEM
+    likwid-perfctr -m -f -C 0 -g MEM ./pdeSolver -hx $INTERVAL -hy $INTERVAL -i 20 -o mem > MEM
     TEXT=$(cat MEM | grep bandwidth | cut -d '|' -f 3 | tr -d ' ' | tr '\n' '\t')
     echo -e "$i\t$TEXT" >> memPlot
     rm MEM
