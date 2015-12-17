@@ -103,6 +103,7 @@ int main(int argc, char** argv){
                 r += a.up*x[index+nx];
                 double sorResidual = ((b[index]-r)*a.dg-x[index]);
                 x[index] = x[index] + omega*sorResidual;
+                // x[index] = (1-omega)*x[index] + omega*a.dg*(b[index]-r);
             }
         }
         likwid_markerStopRegion("SOR");
