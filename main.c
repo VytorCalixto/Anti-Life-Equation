@@ -87,38 +87,29 @@ int main(int argc, char** argv){
     double tSor = 0.0;
     double tRes = 0.0;
     double t;
-    //for(int iter=0;iter<maxIter;++iter) {
-    //    t = timestamp();
-    //    likwid_markerStartRegion("SOR");
-    //    for(int i=0; i < points; ++i) {
-    //        double r = 0;
-    //        int mod = i % (nx);
-    //        if(mod > 0) {
-    //            r += a.lt*x[i-1];
-    //        }
-
-    //        if(mod < (nx-1)) {
-    //            r += a.rt*x[i+1];
-    //        }
-
-    //        if(i >= nx) {
-    //            r += a.dw*x[i-nx];
-    //        }
-
-    //        if(i < (points - nx)) {
-    //            r += a.up*x[i+nx];
-    //        }
-    //        double residual = ((b[i]-r)/a.dg-x[i]);
-    //        x[i] = x[i] + omega*residual;
-    //    }
-    //    likwid_markerStopRegion("SOR");
-    //    tSor += timestamp() - t;
-    //    t = timestamp();
-    //    likwid_markerStartRegion("Residual");
-    //    resNorms[iter] = calculateResidual(&a, &b, &x, nx, ny);
-    //    likwid_markerStopRegion("Residual");
-    //    tRes += timestamp() - t;
-    //}
+    for(int iter=0;iter<maxIter;++iter) {
+        t = timestamp();
+        likwid_markerStartRegion("SOR");
+        for(int i=1; i < ny-1; ++i) {
+            for(int j=1; j < nx-1; ++j) {
+                int index = i*nx + j;
+                double r = 0;
+                r += a.lt*x[index-1];
+                r += a.rt*x[index+1];
+                r += a.dw*x[index-nx];
+                r += a.up*x[index+nx];
+                double residual = ((b[index]-r)/a.dg-x[index]);
+                x[index] = x[index] + omega*residual;
+            }
+        }
+        likwid_markerStopRegion("SOR");
+        tSor += timestamp() - t;
+        t = timestamp();
+        likwid_markerStartRegion("Residual");
+        resNorms[iter] = calculateResidual(&a, &b, &x, nx, ny);
+        likwid_markerStopRegion("Residual");
+        tRes += timestamp() - t;
+    }
     likwid_markerClose();
 
     // printf("#INFO: tempo = %f\n", t1-t0);
