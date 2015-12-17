@@ -26,7 +26,7 @@ typedef struct{
     double lt; //left, Ui,j-1
 } Point;
 
-double calculateResidual(Point** a, double** b, double** x, int nx, int ny);
+double calculateResidual(Point* a, double** b, double** x, int nx, int ny);
 
 int main(int argc, char** argv){
     double hx, hy;
@@ -40,15 +40,9 @@ int main(int argc, char** argv){
     int points = (nx)*(ny);
     // printf("#INFO: Number of points(NX x NY): %d x %d\n", nx, ny);
     // printf("#INFO: Overrelaxation factor: %f\n", omega);
-    Point *a;
+    Point a;
     double *b, *x, *resNorms;
 
-    a = malloc(points*sizeof(Point));
-    if(a == NULL) {
-        fprintf(stderr, "Erro ao alocar vetor A\n");
-        exit(1);
-    }
-    memset(a, 0, points*sizeof(Point));
     b = malloc(points*sizeof(double));
     if(b == NULL) {
         fprintf(stderr, "Erro ao alocar vetor B\n");
@@ -77,34 +71,19 @@ int main(int argc, char** argv){
         }
     }
 
-    double denominator = 4*(2*PI_SQUARE*hxx*hyy+hxx+hyy);
-    double up, left, right, down;
-    up = hx*hyy-2*hyy;
-    down = -(hx*hyy+2*hyy);
-    right = hxx*hy-2*hxx;
-    left = -(hxx*hy+2*hxx);
+    a.dg = 4*(2*PI_SQUARE*hxx*hyy+hxx+hyy);
+    a.up = hx*hyy-2*hyy;
+    a.dw = -(hx*hyy+2*hyy);
+    a.rt = hxx*hy-2*hxx;
+    a.lt = -(hxx*hy+2*hxx);
 
     for(int i=0; i < points; ++i) {
-        int mod = i % (nx);
-        a[i].dg = denominator;
-        if(mod > 0) {
-            a[i].lt = left;
+        if(i <= nx) {
+            b[i] -= a.dw*bottomFrontier(i*hx);
         }
 
-        if(mod < (nx-1)) {
-            a[i].rt = right;
-        }
-
-        if(i >= nx) {
-            a[i].dw = down;
-        } else {
-            b[i] -= down*bottomFrontier(i*hx);
-        }
-
-        if(i < (points - nx)) {
-            a[i].up = up;
-        } else {
-            b[i] -= up*topFrontier(i*hx);
+        if(i > (points - nx)) {
+            b[i] -= a.up*topFrontier(i*hx);
         }
     }
 
@@ -120,21 +99,21 @@ int main(int argc, char** argv){
             double r = 0;
             int mod = i % (nx);
             if(mod > 0) {
-                r += a[i].lt*x[i-1];
+                r += a.lt*x[i-1];
             }
 
             if(mod < (nx-1)) {
-                r += a[i].rt*x[i+1];
+                r += a.rt*x[i+1];
             }
 
             if(i >= nx) {
-                r += a[i].dw*x[i-nx];
+                r += a.dw*x[i-nx];
             }
 
             if(i < (points - nx)) {
-                r += a[i].up*x[i+nx];
+                r += a.up*x[i+nx];
             }
-            double residual = ((b[i]-r)/a[i].dg-x[i]);
+            double residual = ((b[i]-r)/a.dg-x[i]);
             x[i] = x[i] + omega*residual;
         }
         likwid_markerStopRegion("SOR");
@@ -151,33 +130,32 @@ int main(int argc, char** argv){
 
     writeData(path, tSor/maxIter, tRes/maxIter, maxIter, &resNorms, nx, ny, hx, hy, &x);
 
-    free(a);
     free(b);
     free(x);
 
     return 0;
 }
 
-double calculateResidual(Point** a, double** b, double** x, int nx, int ny){
+double calculateResidual(Point* a, double** b, double** x, int nx, int ny){
     double residual = 0;
     int points = nx*ny;
     for (int i = 0; i < points; ++i){
         double r = 0;
         int mod = i % (nx);
         if(mod > 0) {
-            r += (*a)[i].lt * (*x)[i-1];
+            r += (*a).lt * (*x)[i-1];
         }
 
         if(mod < (nx-1)) {
-            r += (*a)[i].rt * (*x)[i+1];
+            r += (*a).rt * (*x)[i+1];
         }
 
         if(i >= nx) {
-            r += (*a)[i].dw * (*x)[i-nx];
+            r += (*a).dw * (*x)[i-nx];
         }
 
         if(i < (points - nx)) {
-            r += (*a)[i].up * (*x)[i+nx];
+            r += (*a).up * (*x)[i+nx];
         }
         double res = ((*b)[i] - r);
         residual += res*res;
