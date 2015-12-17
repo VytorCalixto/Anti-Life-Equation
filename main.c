@@ -26,8 +26,6 @@ typedef struct{
     double lt; //left, Ui,j-1
 } Point;
 
-double calculateResidual(Point* a, double** b, double** x, int nx, int ny);
-
 int main(int argc, char** argv){
     double hx, hy;
     int maxIter;
@@ -71,7 +69,7 @@ int main(int argc, char** argv){
         }
     }
 
-    a.dg = 4*(2*PI_SQUARE*hxx*hyy+hxx+hyy);
+    a.dg = 1/(4*(2*PI_SQUARE*hxx*hyy+hxx+hyy));
     a.up = hx*hyy-2*hyy;
     a.dw = -(hx*hyy+2*hyy);
     a.rt = hxx*hy-2*hxx;
@@ -93,20 +91,31 @@ int main(int argc, char** argv){
         for(int i=1; i < ny-1; ++i) {
             for(int j=1; j < nx-1; ++j) {
                 int index = i*nx + j;
-                double r = 0;
-                r += a.lt*x[index-1];
+                double r = a.lt*x[index-1];
                 r += a.rt*x[index+1];
                 r += a.dw*x[index-nx];
                 r += a.up*x[index+nx];
-                double residual = ((b[index]-r)/a.dg-x[index]);
-                x[index] = x[index] + omega*residual;
+                double sorResidual = ((b[index]-r)*a.dg-x[index]);
+                x[index] = x[index] + omega*sorResidual;
             }
         }
         likwid_markerStopRegion("SOR");
         tSor += timestamp() - t;
         t = timestamp();
         likwid_markerStartRegion("Residual");
-        resNorms[iter] = calculateResidual(&a, &b, &x, nx, ny);
+        double residual = 0;
+        for(int i=1; i < ny; ++i) {
+            for(int j=1; j < nx; ++j) {
+                int index = i*nx + j;
+                double r = a.lt*x[index-1];
+                r += a.rt*x[index+1];
+                r += a.dw*x[index-nx];
+                r += a.up*x[index+nx];
+                double res = (b[index] - r);
+                residual += res*res;
+            }
+        }
+        resNorms[iter] = sqrt(residual);
         likwid_markerStopRegion("Residual");
         tRes += timestamp() - t;
     }
@@ -120,23 +129,6 @@ int main(int argc, char** argv){
     free(x);
 
     return 0;
-}
-
-double calculateResidual(Point* a, double** b, double** x, int nx, int ny){
-    double residual = 0;
-    for(int i=1; i < ny; ++i) {
-        for(int j=1; j < nx; ++j) {
-            double r = 0;
-            int index = (i*nx)+j;
-            r += (*a).lt * (*x)[index-1];
-            r += (*a).rt * (*x)[index+1];
-            r += (*a).dw * (*x)[index-nx];
-            r += (*a).up * (*x)[index+nx];
-            double res = ((*b)[index] - r);
-            residual += res*res;
-        }
-    }
-    return sqrt(residual);
 }
 
 void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
