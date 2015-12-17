@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <math.h>
 #include <string.h>
+#include <likwid.h>
 
 #define PI 3.14159265358979323846
 #define PI_SQUARE 9.86960440108935861883
@@ -24,6 +25,8 @@ typedef struct{
     double rt; //right, Ui,j+1
     double lt; //left, Ui,j-1
 } Point;
+
+double calculateResidual(Point** a, double** b, double** x, int nx, int ny);
 
 int main(int argc, char** argv){
     double hx, hy;
@@ -105,9 +108,11 @@ int main(int argc, char** argv){
         }
     }
 
+    likwid_markerInit();
     // SOR
     double t0 = timestamp();
     for(int iter=0;iter<maxIter;++iter) {
+        likwid_markerStartRegion("SOR");
         for(int i=0; i < points; ++i) {
             double r = 0;
             int mod = i % (nx);
@@ -126,13 +131,16 @@ int main(int argc, char** argv){
             if(i < (points - nx)) {
                 r += a[i].up*x[i+nx];
             }
-            double residual = ((b[i]-r)/a[i].dg - x[i]);
-            resNorms[iter] += residual;
+            double residual = ((b[i]-r)/a[i].dg-x[i]);
             x[i] = x[i] + omega*residual;
         }
-        resNorms[iter] = sqrt(fabs(resNorms[iter]));
+        likwid_markerStopRegion("SOR");
+        likwid_markerStartRegion("Residual");
+        resNorms[iter] = calculateResidual(&a, &b, &x, nx, ny);
+        likwid_markerStopRegion("Residual");
     }
     double t1 = timestamp();
+    likwid_markerClose();
 
     // printf("#INFO: tempo = %f\n", t1-t0);
 
@@ -143,6 +151,33 @@ int main(int argc, char** argv){
     free(x);
 
     return 0;
+}
+
+double calculateResidual(Point** a, double** b, double** x, int nx, int ny){
+    double residual = 0;
+    int points = nx*ny;
+    for (int i = 0; i < points; ++i){
+        double r = 0;
+        int mod = i % (nx);
+        if(mod > 0) {
+            r += (*a)[i].lt * (*x)[i-1];
+        }
+
+        if(mod < (nx-1)) {
+            r += (*a)[i].rt * (*x)[i+1];
+        }
+
+        if(i >= nx) {
+            r += (*a)[i].dw * (*x)[i-nx];
+        }
+
+        if(i < (points - nx)) {
+            r += (*a)[i].up * (*x)[i+nx];
+        }
+        double res = ((*b)[i] - r);
+        residual += res*res;
+    }
+    return sqrt(residual);
 }
 
 void parseArgs(int argc, char*** argv, double* hx, double* hy, int* maxIter,
@@ -205,8 +240,6 @@ void writeData(char* path, double sorTime, double resTime, int maxIter,
     fprintf(f, "###########\n");
     fprintf(f, "set terminal wxt persist\n");
     fprintf(f, "set hidden3d\n");
-    int grid = (nx > 100 || ny > 100) ? 50 : ((nx > ny)? nx : ny);
-    fprintf(f, "set dgrid3d %d,%d qnorm 2\n", grid, grid);
     fprintf(f, "set xlabel 'Y'\n");
     fprintf(f, "set ylabel 'X'\n");
     fprintf(f, "set zlabel 'u(x,y)'\n");
