@@ -132,6 +132,7 @@ int main(int argc, char** argv){
             }
 
             if(i < (points - nx)) {
+//comment only to conflict
                 r += a[i].up*x[i+nx];
             }
             double residual = ((b[i]-r)/a[i].dg-x[i]);
