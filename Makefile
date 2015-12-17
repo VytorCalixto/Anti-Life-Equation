@@ -1,4 +1,4 @@
-CFLAGS = -lm -std=c99 -Wall -O3 -mavx -march=native -llikwid
+CFLAGS=-I/home/soft/likwid/include -llikwid -L/usr/lib -L/home/soft/likwid/lib -lm -std=c99 -Wall -DLIKWID_PERFMON -O3 -march=native -mavx
 
 all: main.c
 	gcc -o pdeSolver main.c $(CFLAGS)
