@@ -77,14 +77,9 @@ int main(int argc, char** argv){
     a.rt = hxx*hy-2*hxx;
     a.lt = -(hxx*hy+2*hxx);
 
-    for(int i=0; i < points; ++i) {
-        if(i <= nx) {
-            b[i] -= a.dw*bottomFrontier(i*hx);
-        }
-
-        if(i > (points - nx)) {
-            b[i] -= a.up*topFrontier(i*hx);
-        }
+    for(int i=0; i < nx; ++i) {
+        b[i] -= a.dw*bottomFrontier(i*hx);
+        b[points-nx+i] -= a.up*topFrontier(i*hx);
     }
 
     likwid_markerInit();
