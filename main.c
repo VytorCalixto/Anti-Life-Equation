@@ -124,27 +124,17 @@ int main(int argc, char** argv){
 
 double calculateResidual(Point* a, double** b, double** x, int nx, int ny){
     double residual = 0;
-    int points = nx*ny;
-    for (int i = 0; i < points; ++i){
-        double r = 0;
-        int mod = i % (nx);
-        if(mod > 0) {
-            r += (*a).lt * (*x)[i-1];
+    for(int i=1; i < ny; ++i) {
+        for(int j=1; j < nx; ++j) {
+            double r = 0;
+            int index = (i*nx)+j;
+            r += (*a).lt * (*x)[index-1];
+            r += (*a).rt * (*x)[index+1];
+            r += (*a).dw * (*x)[index-nx];
+            r += (*a).up * (*x)[index+nx];
+            double res = ((*b)[index] - r);
+            residual += res*res;
         }
-
-        if(mod < (nx-1)) {
-            r += (*a).rt * (*x)[i+1];
-        }
-
-        if(i >= nx) {
-            r += (*a).dw * (*x)[i-nx];
-        }
-
-        if(i < (points - nx)) {
-            r += (*a).up * (*x)[i+nx];
-        }
-        double res = ((*b)[i] - r);
-        residual += res*res;
     }
     return sqrt(residual);
 }
