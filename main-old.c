@@ -276,3 +276,4 @@ double topFrontier(double x) {
 double bottomFrontier(double x) {
     return sin(2*PI*PI-2*PI*x)*sinh(PI*PI);
 }
+
